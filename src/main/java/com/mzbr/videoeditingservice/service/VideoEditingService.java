@@ -1,1 +1,1 @@
-package com.mzbr.videoeditingservice.service;public interface VideoEditingService {}
+package com.mzbr.videoeditingservice.service;import com.mzbr.videoeditingservice.model.VideoEntity;public interface VideoEditingService {	public String processVideo(VideoEntity videoEntity);}
