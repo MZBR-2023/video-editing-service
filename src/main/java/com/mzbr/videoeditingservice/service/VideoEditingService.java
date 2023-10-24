@@ -1,1 +1,1 @@
-package com.mzbr.videoeditingservice.service;import com.mzbr.videoeditingservice.model.VideoEntity;public interface VideoEditingService {	public String processVideo(VideoEntity videoEntity);}
+package com.mzbr.videoeditingservice.service;import java.io.IOException;import com.mzbr.videoeditingservice.model.VideoEntity;public interface VideoEditingService {	public String processVideo(VideoEntity videoEntity,String outPutPath);}

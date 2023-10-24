@@ -1,20 +1,27 @@
 package com.mzbr.videoeditingservice;
 
-import java.io.File;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.mzbr.videoeditingservice.model.Clip;
 import com.mzbr.videoeditingservice.model.Crop;
 import com.mzbr.videoeditingservice.model.VideoEntity;
+import com.mzbr.videoeditingservice.service.VideoEditingService;
 
 @SpringBootTest
 @Profile("ssafy")
 class VideoEditingServiceApplicationTests {
+
+	private final VideoEditingService videoEditingService;
+
+	@Autowired
+	VideoEditingServiceApplicationTests(VideoEditingService videoEditingService) {
+		this.videoEditingService = videoEditingService;
+	}
 
 	@Test
 	void contextLoads() {
@@ -33,14 +40,16 @@ class VideoEditingServiceApplicationTests {
 			.url("test2.mp4")
 			.name("video2")
 			.durationTime(52000)
-			.crop(Crop.builder().startX(0).startY(0).width(100).height(100).zoomFactor(1).build())
+			.width(2048)
+			.height(1080)
+			.crop(Crop.builder().startX(100).startY(100).width(100).height(100).zoomFactor(2).build())
 			.build();
 
 		VideoEntity videoEntity = VideoEntity.builder()
 			.clips(List.of(clip1,clip2))
 			.id(1L)
 			.build();
-
+		videoEditingService.processVideo(videoEntity,"out.mp4");
 	}
 
 }
