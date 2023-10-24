@@ -1,0 +1,1 @@
+package com.mzbr.videoeditingservice.service;public interface VideoEditingService {}
