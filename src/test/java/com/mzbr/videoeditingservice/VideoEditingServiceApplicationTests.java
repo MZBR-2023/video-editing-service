@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Profile;
 
 import com.mzbr.videoeditingservice.model.Clip;
 import com.mzbr.videoeditingservice.model.Crop;
+import com.mzbr.videoeditingservice.model.UserUploadAudioEntity;
 import com.mzbr.videoeditingservice.model.VideoEntity;
 import com.mzbr.videoeditingservice.service.VideoEditingService;
 import com.mzbr.videoeditingservice.service.VideoEditingServiceImpl;
@@ -49,8 +50,16 @@ class VideoEditingServiceApplicationTests {
 			.crop(Crop.builder().startX(100).startY(100).width(100).height(100).zoomFactor(2).build())
 			.build();
 
+		UserUploadAudioEntity userUploadAudioEntity = UserUploadAudioEntity.builder()
+			.id(1L)
+			.url("test.mp3")
+			.startTime(10000)
+			.extension("mp3")
+			.build();
+
 		VideoEntity videoEntity = VideoEntity.builder()
 			.clips(List.of(clip1,clip2))
+			.userUploadAudioEntity(userUploadAudioEntity)
 			.id(1L)
 			.build();
 		// videoEditingService.processVideo(videoEntity,"out.mp4");
