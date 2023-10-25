@@ -35,14 +35,14 @@ class VideoEditingServiceApplicationTests {
 			.id(1L)
 			.url("test1.mp4")
 			.name("video1")
-			.durationTime(11000)
+			.durationTime(58000)
 			.volume(1F)
 			.build();
 		Clip clip2 = Clip.builder()
 			.id(2L)
 			.url("test2.mp4")
 			.name("video2")
-			.durationTime(52000)
+			.durationTime(59000)
 			.volume(0.1F)
 			.width(720)
 			.height(1280)
@@ -55,7 +55,7 @@ class VideoEditingServiceApplicationTests {
 			.build();
 		// videoEditingService.processVideo(videoEntity,"out.mp4");
 
-		videoEditingService.localVideoProcess(videoEntity,"out%03d.mov",720,1280);
+		videoEditingService.localVideoProcess(videoEntity,720,1280);
 	}
 
 }
