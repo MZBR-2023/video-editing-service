@@ -1,10 +1,10 @@
 package com.mzbr.videoeditingservice;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
 
@@ -13,14 +13,14 @@ import com.mzbr.videoeditingservice.model.Crop;
 import com.mzbr.videoeditingservice.model.Subtitle;
 import com.mzbr.videoeditingservice.model.UserUploadAudioEntity;
 import com.mzbr.videoeditingservice.model.VideoEntity;
-import com.mzbr.videoeditingservice.service.VideoEditingService;
-import com.mzbr.videoeditingservice.service.VideoEditingServiceImpl;
 
 @SpringBootTest
 @Profile("ssafy")
+@ConfigurationPropertiesScan
 class VideoEditingServiceApplicationTests {
 
-	private final VideoEditingService videoEditingService = new LocalVideoEditingService();
+
+	private final LocalVideoEditingService localVideoEditingService=new LocalVideoEditingService();
 
 	@Test
 	void contextLoads() {
@@ -84,7 +84,7 @@ class VideoEditingServiceApplicationTests {
 			.build();
 		// videoEditingService.processVideo(videoEntity,"out.mp4");
 
-		videoEditingService.processVideo(videoEntity,720,1280);
+		localVideoEditingService.processVideo(videoEntity,720,1280);
 	}
 
 }
