@@ -11,13 +11,12 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create
-#  config:
-#    import: classpath:subtitle.yml
+  config:
+    import: classpath:s3-local.yml
 logging:
   level:
     com.mzbr: DEBUG
     root: DEBUG
-
 
 subtitle:
   ass-header: |
