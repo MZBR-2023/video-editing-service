@@ -19,19 +19,14 @@ import com.mzbr.videoeditingservice.service.VideoEditingServiceImpl;
 @Profile("ssafy")
 class VideoEditingServiceApplicationTests {
 
-	private final VideoEditingService videoEditingService;
-
-	@Autowired
-	VideoEditingServiceApplicationTests(VideoEditingService videoEditingService) {
-		this.videoEditingService = videoEditingService;
-	}
+	private final VideoEditingService videoEditingService = new LocalVideoEditingService();
 
 	@Test
 	void contextLoads() {
 	}
 
 	@Test
-	void 비디오_병합_테스트() throws IOException {
+	void 비디오_병합_테스트() throws Exception {
 		Clip clip1 = Clip.builder()
 			.id(1L)
 			.url("test1.mp4")
@@ -64,7 +59,7 @@ class VideoEditingServiceApplicationTests {
 			.build();
 		// videoEditingService.processVideo(videoEntity,"out.mp4");
 
-		videoEditingService.localVideoProcess(videoEntity,720,1280);
+		videoEditingService.processVideo(videoEntity,720,1280);
 	}
 
 }
