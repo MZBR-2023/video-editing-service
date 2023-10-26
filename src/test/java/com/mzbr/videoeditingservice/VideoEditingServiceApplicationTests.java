@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.mzbr.videoeditingservice.model.Clip;
 import com.mzbr.videoeditingservice.model.Crop;
@@ -14,13 +15,18 @@ import com.mzbr.videoeditingservice.model.Subtitle;
 import com.mzbr.videoeditingservice.model.UserUploadAudioEntity;
 import com.mzbr.videoeditingservice.model.VideoEntity;
 
+import lombok.RequiredArgsConstructor;
+
 @SpringBootTest
-@Profile("ssafy")
+@ActiveProfiles("ssafy")
 @ConfigurationPropertiesScan
+@RequiredArgsConstructor
 class VideoEditingServiceApplicationTests {
 
 
-	private final LocalVideoEditingService localVideoEditingService=new LocalVideoEditingService();
+
+	@Autowired
+	private LocalVideoEditingService localVideoEditingService;
 
 	@Test
 	void contextLoads() {
