@@ -71,7 +71,9 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	private StringBuilder generateFilter(VideoEntity videoEntity, int width, int height, String assPath) throws
 		Exception {
 		StringBuilder filter = new StringBuilder();
+
 		filter.append(generateVideoCropAndLayoutFilter(videoEntity.getClips(), width, height)).append(";");
+
 		filter.append(generateVideoVolumeFilter(videoEntity.getClips())).append(";");
 		if (videoEntity.hasAudio()) {
 			filter.append(generateAudioFilter(videoEntity.getAudio(), videoEntity.getTotalDuration(),
