@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.github.kokorin.jaffree.ffmpeg.*;
+import com.mzbr.videoeditingservice.component.SubtitleHeader;
 import com.mzbr.videoeditingservice.model.Audio;
 import com.mzbr.videoeditingservice.model.Clip;
 import com.mzbr.videoeditingservice.model.Subtitle;
@@ -33,22 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 public class VideoEditingServiceImpl implements VideoEditingService {
 
 	protected final S3Util s3Util;
-
-	private static final String ASS_HEADER =
-		"[Script Info]\n" +
-			"ScriptType: v4.00+\n" +
-			"WrapStyle: 0\n" +
-			"ScaledBorderAndShadow: yes\n" +
-			"YCbCr Matrix: TV.601\n" +
-			"\n" +
-			"[V4+ Styles]\n" +
-			"Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
-			+
-			"Style: Default,Pretendard,20,&H00FFFFFF,&H0000FFFF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,0,0,5,10,10,10,0\n"
-			+
-			"\n" +
-			"[Events]\n" +
-			"Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
+	protected final SubtitleHeader subtitleHeader;
 
 	@Override
 	public String processVideo(VideoEntity videoEntity, int width, int height, String folderPath) throws Exception {
@@ -74,7 +60,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		List<Path> pathList = getSegementPathList(videoEntity.getVideoUuid());
 
 		//생성 비디오 s3에 업로드
-		uploadTempFileToS3(pathList, folderPath + videoEntity.getVideoUuid());
+		uploadTempFileToS3(pathList, folderPath + "/" + videoEntity.getVideoUuid());
 
 		//임시 파일 삭제
 		deleteTemporaryFile(pathList, assPath);
@@ -222,7 +208,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	}
 
 	private String createAssStringBySubtitles(List<Subtitle> subtitles) {
-		StringBuilder assContent = new StringBuilder(ASS_HEADER);
+		StringBuilder assContent = new StringBuilder(subtitleHeader.getAssHeader());
 
 		for (Subtitle subtitle : subtitles) {
 			String startTime = millisecondsToTimeCode(subtitle.getStartTime());
