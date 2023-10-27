@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
@@ -15,11 +16,13 @@ import com.mzbr.videoeditingservice.model.Crop;
 import com.mzbr.videoeditingservice.model.Subtitle;
 import com.mzbr.videoeditingservice.model.UserUploadAudioEntity;
 import com.mzbr.videoeditingservice.model.VideoEntity;
+import com.mzbr.videoeditingservice.service.VideoEditingService;
 
 import lombok.RequiredArgsConstructor;
 
 @SpringBootTest
 @ActiveProfiles("ssafy")
+@Profile("ssafy")
 @ConfigurationPropertiesScan
 @RequiredArgsConstructor
 class VideoEditingServiceApplicationTests {
@@ -28,6 +31,10 @@ class VideoEditingServiceApplicationTests {
 
 	@Autowired
 	private LocalVideoEditingService localVideoEditingService;
+
+	@Qualifier("videoEditingServiceImpl")
+	@Autowired
+	private VideoEditingService videoEditingService;
 
 	@Test
 	void contextLoads() {
@@ -90,7 +97,7 @@ class VideoEditingServiceApplicationTests {
 			.id(1L)
 			.build();
 
-		localVideoEditingService.processVideo(videoEntity,720,1280);
+		localVideoEditingService.processVideo(videoEntity,720,1280, "video");
 	}
 
 	@Test
@@ -139,6 +146,7 @@ class VideoEditingServiceApplicationTests {
 			.id(1L)
 			.url("origin_audio/test.mp3")
 			.startTime(10000)
+			.volume(1.5F)
 			.extension("mp3")
 			.build();
 
@@ -150,7 +158,7 @@ class VideoEditingServiceApplicationTests {
 			.id(1L)
 			.build();
 
-		localVideoEditingService.processVideo(videoEntity,720,1280);
+		videoEditingService.processVideo(videoEntity,720,1280,"s3Test");
 	}
 
 }
