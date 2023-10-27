@@ -54,7 +54,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		StringBuilder filter = generateFilter(videoEntity, width, height, assPath);
 
 		//비디오 생성
-		excuteSplitVideoIntoSegments(fFmpeg, 5, filter.toString(), outputPath);
+		executeSplitVideoIntoSegments(fFmpeg, 5, filter.toString(), outputPath);
 
 		//비디오 경로리스트 생성
 		List<Path> pathList = getSegementPathList(videoEntity.getVideoUuid());
@@ -245,7 +245,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	}
 
 	@Override
-	public void excuteSplitVideoIntoSegments(FFmpeg fFmpeg, int perSegmentSec, String filter, String outputPath) throws
+	public void executeSplitVideoIntoSegments(FFmpeg fFmpeg, int perSegmentSec, String filter, String outputPath) throws
 		Exception {
 		fFmpeg.addOutput(UrlOutput.toPath(Path.of(outputPath))
 				.addArguments("-filter_complex", filter)

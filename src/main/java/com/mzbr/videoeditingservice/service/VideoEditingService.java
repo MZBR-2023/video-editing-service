@@ -28,7 +28,7 @@ public interface VideoEditingService {
 
 	String generateASSBySubtitles(List<Subtitle> subtitles, String fileName) throws Exception;
 
-	void excuteSplitVideoIntoSegments(FFmpeg fFmpeg, int perSegmentSec, String filter, String outputPath) throws
+	void executeSplitVideoIntoSegments(FFmpeg fFmpeg, int perSegmentSec, String filter, String outputPath) throws
 		Exception;
 
 	void uploadTempFileToS3(List<Path> pathList, String folderName) throws Exception;

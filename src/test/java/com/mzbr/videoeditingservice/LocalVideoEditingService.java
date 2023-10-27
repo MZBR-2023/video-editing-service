@@ -11,11 +11,9 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
 
 import com.github.kokorin.jaffree.ffmpeg.FFmpeg;
 import com.github.kokorin.jaffree.ffmpeg.Input;
@@ -27,7 +25,6 @@ import com.mzbr.videoeditingservice.model.VideoEntity;
 import com.mzbr.videoeditingservice.service.VideoEditingServiceImpl;
 import com.mzbr.videoeditingservice.util.S3Util;
 
-import lombok.RequiredArgsConstructor;
 
 @Component("LocalVideoEditing")
 public class LocalVideoEditingService extends VideoEditingServiceImpl {
@@ -63,7 +60,7 @@ public class LocalVideoEditingService extends VideoEditingServiceImpl {
 
 			inputs.forEach(input -> fFmpeg.addInput(input));
 
-			excuteSplitVideoIntoSegments(fFmpeg, 5, filter.toString(), outputPath);
+			executeSplitVideoIntoSegments(fFmpeg, 5, filter.toString(), outputPath);
 
 			List<Path> pathList = getSegementPathList(videoEntity.getVideoUuid());
 
