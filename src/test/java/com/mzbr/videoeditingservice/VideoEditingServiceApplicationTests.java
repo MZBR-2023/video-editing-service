@@ -57,7 +57,7 @@ class VideoEditingServiceApplicationTests {
 			.volume(0.1F)
 			.width(720)
 			.height(1280)
-			.crop(Crop.builder().startX(100).startY(100).width(100).height(100).zoomFactor(2).build())
+			.crop(Crop.builder().startX(100).startY(100).zoomFactor(2F).build())
 			.build();
 		Subtitle subtitle1 = Subtitle.builder()
 			.color(16711680)
@@ -117,7 +117,7 @@ class VideoEditingServiceApplicationTests {
 			.volume(0.1F)
 			.width(720)
 			.height(1280)
-			.crop(Crop.builder().startX(100).startY(100).width(100).height(100).zoomFactor(2).build())
+			.crop(Crop.builder().startX(100).startY(100).zoomFactor(2F).build())
 			.build();
 		Subtitle subtitle1 = Subtitle.builder()
 			.color(16711680)
