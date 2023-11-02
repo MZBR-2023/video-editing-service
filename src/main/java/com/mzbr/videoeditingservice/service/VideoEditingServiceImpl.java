@@ -117,6 +117,16 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 			pathList.add(m3u8FilePath);
 		}
 		s3Util.uploadLocalFileByStringFormat(pathList,ENCODED_FOLDER+"/"+videoEntity.getVideoUuid());
+
+		for (Path path : pathList) {
+			try {
+				Files.delete(path);
+				log.info("Deleted file: {}", path);
+			} catch (IOException e) {
+				log.info("File delete fail.");
+			}
+		}
+
 	}
 
 	private void saveVideoSegment(String folderPath, VideoEntity videoEntity, List<Path> pathList) {
