@@ -3,6 +3,8 @@ package com.mzbr.videoeditingservice;
 import java.util.List;
 import java.util.UUID;
 
+import javax.transaction.Transactional;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -16,6 +18,8 @@ import com.mzbr.videoeditingservice.model.Crop;
 import com.mzbr.videoeditingservice.model.Subtitle;
 import com.mzbr.videoeditingservice.model.UserUploadAudioEntity;
 import com.mzbr.videoeditingservice.model.VideoEntity;
+import com.mzbr.videoeditingservice.repository.VideoRepository;
+import com.mzbr.videoeditingservice.repository.VideoSegmentRepository;
 import com.mzbr.videoeditingservice.service.VideoEditingService;
 
 import lombok.RequiredArgsConstructor;
@@ -35,6 +39,11 @@ class VideoEditingServiceApplicationTests {
 	@Qualifier("videoEditingServiceImpl")
 	@Autowired
 	private VideoEditingService videoEditingService;
+
+	@Autowired
+	private VideoSegmentRepository videoSegmentRepository;
+	@Autowired
+	private VideoRepository videoRepository;
 
 	@Test
 	void contextLoads() {
@@ -101,6 +110,7 @@ class VideoEditingServiceApplicationTests {
 	}
 
 	@Test
+	@Transactional
 	void S3_테스트() throws Exception{
 		Clip clip1 = Clip.builder()
 			.id(1L)
@@ -120,24 +130,24 @@ class VideoEditingServiceApplicationTests {
 			.crop(Crop.builder().startX(100).startY(100).zoomFactor(2F).build())
 			.build();
 		Subtitle subtitle1 = Subtitle.builder()
+			.id(1L)
 			.color(16711680)
 			.text("테스트1")
 			.scale(2.0F)
 			.startTime(1000)
 			.endTime(5000)
-			.id(1L)
 			.positionX(100)
 			.positionY(100)
 			.zIndex(1)
 			.build();
 
 		Subtitle subtitle2	 = Subtitle.builder()
+			.id(2L)
 			.color(65280 )
 			.text("good")
 			.scale(0.6F)
 			.startTime(3000)
 			.endTime(8000)
-			.id(1L)
 			.positionX(100)
 			.positionY(100)
 			.zIndex(3)
@@ -155,10 +165,15 @@ class VideoEditingServiceApplicationTests {
 			.subtitles((List.of(subtitle1,subtitle2)))
 			.userUploadAudioEntity(userUploadAudioEntity)
 			.videoUuid(UUID.randomUUID().toString())
-			.id(1L)
 			.build();
 
-		videoEditingService.processVideo(videoEntity,720,1280,"s3Test");
+
+		VideoEntity save =  videoRepository.save(videoEntity);
+
+		System.out.println(save);
+		videoEditingService.processVideo(save.getId(),720,1280,"s3Test");
+
+		System.out.println(videoSegmentRepository.findAll());
 	}
 
 }
