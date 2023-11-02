@@ -35,11 +35,13 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	protected final S3Util s3Util;
 	protected final SubtitleHeader subtitleHeader;
+	private static final String CURRENT_WORKING_DIR = System.getProperty("user.dir");
 
 	@Override
 	public String processVideo(VideoEntity videoEntity, int width, int height, String folderPath) throws Exception {
 
 		//출력 이름 지정
+		String tempOutputPath = videoEntity.getVideoUuid() + ".mov";
 		String outputPath = videoEntity.getVideoUuid() + "[%03d].mov";
 
 		FFmpeg fFmpeg = FFmpeg.atPath();
@@ -256,11 +258,13 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 				.addArguments("-f", "segment")
 				.addArguments("-segment_time", String.valueOf(perSegmentSec))
 				.addArguments("-segment_time_delta", "0.05")
-				.addArguments("-reset_timestamps", "1")
+				.addArgument("-copyts")
 				.addArguments("-map", "[outv]")
 				.addArguments("-map", "[outa]"))
 			.execute();
 	}
+
+
 
 	@Override
 	public void uploadTempFileToS3(List<Path> pathList, String folderName) throws Exception {
