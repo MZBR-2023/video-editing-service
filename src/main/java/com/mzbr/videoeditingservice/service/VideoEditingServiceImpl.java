@@ -173,9 +173,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	@Override
 	public String generateASSBySubtitles(List<Subtitle> subtitles, String fileName) throws Exception {
-		if (subtitles.size() == 0) {
-			return "empty";
-		}
+
 		String assContent = createAssStringBySubtitles(subtitles);
 		File tempFile = File.createTempFile(fileName, ".ass");
 
@@ -213,20 +211,34 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	private String createAssStringBySubtitles(List<Subtitle> subtitles) {
 		StringBuilder assContent = new StringBuilder(subtitleHeader.getAssHeader());
+		if(subtitles!=null)
+		{
+			for (Subtitle subtitle : subtitles) {
+				String startTime = millisecondsToTimeCode(subtitle.getStartTime());
+				String endTime = millisecondsToTimeCode(subtitle.getEndTime());
 
-		for (Subtitle subtitle : subtitles) {
-			String startTime = millisecondsToTimeCode(subtitle.getStartTime());
-			String endTime = millisecondsToTimeCode(subtitle.getEndTime());
-			String position = subtitle.getPositionX() + "," + subtitle.getPositionY();
+				StringBuilder textBuilder = new StringBuilder();
+				textBuilder.append("{\\pos(")
+					.append(subtitle.getPositionX())
+					.append(',')
+					.append(subtitle.getPositionY())
+					.append(")\\fs")
+					.append(20.0f * subtitle.getScale())
+					.append("\\c")
+					.append(convertToASSColor(subtitle.getColor()))
+					.append('}')
+					.append(subtitle.getText());
 
-			float adjustedFontSize = 20.0f * subtitle.getScale();
-			String colorInAssFormat = convertToASSColor(subtitle.getColor());
-			String text =
-				"{\\pos(" + position + ")\\fs" + adjustedFontSize + "\\c" + colorInAssFormat + "}" + subtitle.getText();
-
-			assContent.append(
-				"Dialogue: " + subtitle.getZIndex() + "," + startTime + "," + endTime + ",Default,,0,0,0,," + text
-					+ "\n");
+				assContent.append("Dialogue: ")
+					.append(subtitle.getZIndex())
+					.append(',')
+					.append(startTime)
+					.append(',')
+					.append(endTime)
+					.append(",Default,,0,0,0,,")
+					.append(textBuilder)
+					.append('\n');
+			}
 		}
 		return assContent.toString();
 	}
