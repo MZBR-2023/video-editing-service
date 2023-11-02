@@ -41,7 +41,6 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	public String processVideo(VideoEntity videoEntity, int width, int height, String folderPath) throws Exception {
 
 		//출력 이름 지정
-		String tempOutputPath = videoEntity.getVideoUuid() + ".mov";
 		String outputPath = videoEntity.getVideoUuid() + "[%03d].mov";
 
 		FFmpeg fFmpeg = FFmpeg.atPath();
@@ -193,12 +192,11 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	protected List<Path> getSegementPathList(String uuid) {
 		List<Path> result = new ArrayList<>();
-		String projectRootPath = System.getProperty("user.dir");
-		Path directory = Paths.get(projectRootPath);
+
 		int index = 0;
 
 		while (true) {
-			Path filePath = directory.resolve(String.format("%s[%03d].mov", uuid, index));
+			Path filePath = Paths.get(CURRENT_WORKING_DIR+ String.format("/%s[%03d].mov", uuid, index));
 			if (Files.exists(filePath)) {
 				result.add(filePath);
 			} else {
