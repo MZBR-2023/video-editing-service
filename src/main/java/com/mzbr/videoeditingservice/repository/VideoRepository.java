@@ -11,6 +11,6 @@ import com.mzbr.videoeditingservice.model.VideoEntity;
 @Repository
 public interface VideoRepository extends JpaRepository<VideoEntity, Long> {
 
-	@EntityGraph(value = "VideoEntity.clipsAndCrops", type = EntityGraph.EntityGraphType.FETCH)
+	@EntityGraph(value = "VideoEntity.all", type = EntityGraph.EntityGraphType.FETCH)
 	Optional<VideoEntity> findById(Long id);
 }

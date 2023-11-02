@@ -22,6 +22,9 @@ import com.mzbr.videoeditingservice.component.SubtitleHeader;
 import com.mzbr.videoeditingservice.model.Audio;
 import com.mzbr.videoeditingservice.model.Clip;
 import com.mzbr.videoeditingservice.model.VideoEntity;
+import com.mzbr.videoeditingservice.model.VideoSegment;
+import com.mzbr.videoeditingservice.repository.VideoRepository;
+import com.mzbr.videoeditingservice.repository.VideoSegmentRepository;
 import com.mzbr.videoeditingservice.service.VideoEditingServiceImpl;
 import com.mzbr.videoeditingservice.util.S3Util;
 
@@ -32,13 +35,13 @@ public class LocalVideoEditingService extends VideoEditingServiceImpl {
 	private final ResourceLoader resourceLoader;
 
 	@Autowired
-	public LocalVideoEditingService(S3Util s3Util, SubtitleHeader subtitleHeader,
+	public LocalVideoEditingService(S3Util s3Util, SubtitleHeader subtitleHeader, VideoSegmentRepository videoSegmentRepository,
+		VideoRepository videoRepository,
 		ResourceLoader resourceLoader) {
-		super(s3Util, subtitleHeader);
+		super(s3Util, subtitleHeader, videoSegmentRepository,videoRepository);
 		this.resourceLoader = resourceLoader;
 	}
 
-	@Override
 	public String processVideo(VideoEntity videoEntity, int width, int height, String folderPath) throws Exception {
 		boolean hasVideo =
 			videoEntity.getUserUploadAudioEntity() != null || videoEntity.getSelectedServerAudioEntity() != null;

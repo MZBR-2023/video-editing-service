@@ -23,6 +23,9 @@ import com.mzbr.videoeditingservice.model.Audio;
 import com.mzbr.videoeditingservice.model.Clip;
 import com.mzbr.videoeditingservice.model.Subtitle;
 import com.mzbr.videoeditingservice.model.VideoEntity;
+import com.mzbr.videoeditingservice.model.VideoSegment;
+import com.mzbr.videoeditingservice.repository.VideoRepository;
+import com.mzbr.videoeditingservice.repository.VideoSegmentRepository;
 import com.mzbr.videoeditingservice.util.S3Util;
 
 import lombok.RequiredArgsConstructor;
@@ -36,12 +39,15 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	protected final S3Util s3Util;
 	protected final SubtitleHeader subtitleHeader;
 	private static final String CURRENT_WORKING_DIR = System.getProperty("user.dir");
+	private final VideoSegmentRepository videoSegmentRepository;
+	private final VideoRepository videoRepository;
 
 	@Override
-	public String processVideo(VideoEntity videoEntity, int width, int height, String folderPath) throws Exception {
+	public String processVideo(Long videoId, int width, int height, String folderPath) throws Exception {
+		VideoEntity videoEntity = videoRepository.findById(videoId).orElseThrow();
 
 		//출력 이름 지정
-		String outputPath = videoEntity.getVideoUuid() + "[%03d].mov";
+		String outputPath = "%03d.mov";
 
 		FFmpeg fFmpeg = FFmpeg.atPath();
 
@@ -62,6 +68,19 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 		//생성 비디오 s3에 업로드
 		uploadTempFileToS3(pathList, folderPath + "/" + videoEntity.getVideoUuid());
+
+		List<VideoSegment> videoSegmentList = new ArrayList<>();
+		for (int i = 0; i < pathList.size(); i++) {
+			videoSegmentList.add(VideoSegment.builder()
+				.videoUrl(
+					folderPath + "/" + videoEntity.getVideoUuid() + "/" + pathList.get(i).getFileName().toString())
+				.videoSequence(i)
+				.videoName(videoEntity.getVideoUuid())
+				.videoEntity(videoEntity)
+				.build());
+		}
+		videoSegmentRepository.saveAll(videoSegmentList);
+
 
 		//임시 파일 삭제
 		deleteTemporaryFile(pathList, assPath);
@@ -196,7 +215,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		int index = 0;
 
 		while (true) {
-			Path filePath = Paths.get(CURRENT_WORKING_DIR+ String.format("/%s[%03d].mov", uuid, index));
+			Path filePath = Paths.get(CURRENT_WORKING_DIR + String.format("/%03d.mov", index));
 			if (Files.exists(filePath)) {
 				result.add(filePath);
 			} else {
@@ -209,8 +228,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	private String createAssStringBySubtitles(List<Subtitle> subtitles) {
 		StringBuilder assContent = new StringBuilder(subtitleHeader.getAssHeader());
-		if(subtitles!=null)
-		{
+		if (subtitles != null) {
 			for (Subtitle subtitle : subtitles) {
 				String startTime = millisecondsToTimeCode(subtitle.getStartTime());
 				String endTime = millisecondsToTimeCode(subtitle.getEndTime());
@@ -273,8 +291,6 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 				.addArguments("-map", "[outa]"))
 			.execute();
 	}
-
-
 
 	@Override
 	public void uploadTempFileToS3(List<Path> pathList, String folderName) throws Exception {
