@@ -12,7 +12,7 @@ spring:
     hibernate:
       ddl-auto: create
   config:
-    import: s3-local.yml, subtitle-local.yml, kinesis-local.yml
+    import: s3-local.yml, subtitle-local.yml, kinesis-local.yml, dynamo-local.yml
 #logging:
 #  level:
 #    com.mzbr: DEBUG

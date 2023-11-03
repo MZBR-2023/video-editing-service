@@ -7,21 +7,22 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.kinesis.KinesisClient;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Configuration
-public class KinesisConfig {
-	@Value("${cloud.kinesis.credentials.access-key}")
+public class DynamoConfig {
+	@Value("${cloud.dynamo.credentials.access-key}")
 	private String AWS_ACCESS_KEY_ID;
 
-	@Value("${cloud.kinesis.credentials.secret-key}")
+	@Value("${cloud.dynamo.credentials.secret-key}")
 	private String AWS_SECRET_ACCESS_KEY;
 
 	@Bean
-	public KinesisClient kinesisClient() {
-		return KinesisClient.builder()
-			.region(Region.AP_NORTHEAST_2)
-			.credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY)))
+	public DynamoDbClient dynamoDbClient() {
+		return DynamoDbClient.builder()
+			.region(Region.AP_NORTHEAST_2) // 원하는 리전으로 교체하세요
+			.credentialsProvider(
+				StaticCredentialsProvider.create(AwsBasicCredentials.create(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)))
 			.build();
 	}
 
