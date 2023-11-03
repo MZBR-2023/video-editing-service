@@ -12,7 +12,8 @@ import com.mzbr.videoeditingservice.model.VideoEntity;
 
 public interface VideoEditingService {
 
-	String processVideo(VideoEntity videoEntity, int width, int height, String folderPath) throws Exception;
+
+	String processVideo(Long videoId, int width, int height, String folderPath) throws Exception;
 
 	List<Input> prepareVideoInputs(List<Clip> clips) throws Exception;
 

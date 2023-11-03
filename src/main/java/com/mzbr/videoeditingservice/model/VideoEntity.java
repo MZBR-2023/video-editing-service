@@ -56,6 +56,8 @@ public class VideoEntity {
 	@OneToOne(mappedBy = "videoEntity")
 	SelectedServerAudioEntity selectedServerAudioEntity;
 
+
+
 	public boolean hasAudio() {
 		return userUploadAudioEntity != null || subtitles != null;
 	}

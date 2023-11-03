@@ -13,8 +13,9 @@ spring:
       ddl-auto: create
   config:
     import: s3-local.yml, subtitle-local.yml
-logging:
-  level:
-    com.mzbr: DEBUG
-    root: DEBUG
-
+#logging:
+#  level:
+#    com.mzbr: DEBUG
+#    root: DEBUG
+encoded-folder:
+  prefix: "encoded-video"

@@ -1,5 +1,6 @@
 package com.mzbr.videoeditingservice.service;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,11 +11,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.github.kokorin.jaffree.ffmpeg.*;
@@ -23,6 +26,9 @@ import com.mzbr.videoeditingservice.model.Audio;
 import com.mzbr.videoeditingservice.model.Clip;
 import com.mzbr.videoeditingservice.model.Subtitle;
 import com.mzbr.videoeditingservice.model.VideoEntity;
+import com.mzbr.videoeditingservice.model.VideoSegment;
+import com.mzbr.videoeditingservice.repository.VideoRepository;
+import com.mzbr.videoeditingservice.repository.VideoSegmentRepository;
 import com.mzbr.videoeditingservice.util.S3Util;
 
 import lombok.RequiredArgsConstructor;
@@ -35,12 +41,24 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	protected final S3Util s3Util;
 	protected final SubtitleHeader subtitleHeader;
+	private static final String CURRENT_WORKING_DIR = System.getProperty("user.dir");
+
+	@Value("${encoded-folder.prefix}")
+	private String ENCODED_FOLDER;
+
+	@Value("${cloud.aws.url}")
+	private String S3_URL;
+
+
+	private final VideoSegmentRepository videoSegmentRepository;
+	private final VideoRepository videoRepository;
 
 	@Override
-	public String processVideo(VideoEntity videoEntity, int width, int height, String folderPath) throws Exception {
+	public String processVideo(Long videoId, int width, int height, String folderPath) throws Exception {
+		VideoEntity videoEntity = videoRepository.findById(videoId).orElseThrow();
 
 		//출력 이름 지정
-		String outputPath = videoEntity.getVideoUuid() + "[%03d].mov";
+		String outputPath = "%03d.mov";
 
 		FFmpeg fFmpeg = FFmpeg.atPath();
 
@@ -62,10 +80,67 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		//생성 비디오 s3에 업로드
 		uploadTempFileToS3(pathList, folderPath + "/" + videoEntity.getVideoUuid());
 
+		//DB에 비디오 세그먼트 데이터 저장
+		saveVideoSegment(folderPath, videoEntity, pathList);
+
+		//m3u8파일 제작 후 업로드
+		createAndUploadM3U8(videoEntity, pathList.size());
+
 		//임시 파일 삭제
 		deleteTemporaryFile(pathList, assPath);
 
 		return null;
+	}
+
+	private void createAndUploadM3U8(VideoEntity videoEntity, int size) {
+
+		String[] versions = {"P144","P360","P480","P720"};
+		List<Path> pathList = new ArrayList<>();
+		for (String version : versions) {
+			StringBuilder m3u8Content = new StringBuilder();
+			m3u8Content.append("#EXTM3U\n");
+			m3u8Content.append("#EXT-X-VERSION:3\n");
+			m3u8Content.append("#EXT-X-TARGETDURATION:5\n");
+			for (int i = 0; i < size; i++) {
+				m3u8Content.append("#EXTINF:5,\n");
+				m3u8Content.append(S3_URL +ENCODED_FOLDER + "/" + videoEntity.getVideoUuid() + "/"+version+"/" + String.format("%03d.ts",i));
+				m3u8Content.append("\n");
+			}
+			m3u8Content.append("#EXT-X-ENDLIST\n");
+
+			Path m3u8FilePath = Paths.get(version+".m3u8") ;
+			try (BufferedWriter writer = Files.newBufferedWriter(m3u8FilePath)) {
+				writer.write(m3u8Content.toString());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			pathList.add(m3u8FilePath);
+		}
+		s3Util.uploadLocalFileByStringFormat(pathList,ENCODED_FOLDER+"/"+videoEntity.getVideoUuid());
+
+		for (Path path : pathList) {
+			try {
+				Files.delete(path);
+				log.info("Deleted file: {}", path);
+			} catch (IOException e) {
+				log.info("File delete fail.");
+			}
+		}
+
+	}
+
+	private void saveVideoSegment(String folderPath, VideoEntity videoEntity, List<Path> pathList) {
+		List<VideoSegment> videoSegmentList = new ArrayList<>();
+		for (int i = 0; i < pathList.size(); i++) {
+			videoSegmentList.add(VideoSegment.builder()
+				.videoUrl(
+					folderPath + "/" + videoEntity.getVideoUuid() + "/" + pathList.get(i).getFileName().toString())
+				.videoSequence(i)
+				.videoName(videoEntity.getVideoUuid())
+				.videoEntity(videoEntity)
+				.build());
+		}
+		videoSegmentRepository.saveAll(videoSegmentList);
 	}
 
 	private StringBuilder generateFilter(VideoEntity videoEntity, int width, int height, String assPath) throws
@@ -171,9 +246,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	@Override
 	public String generateASSBySubtitles(List<Subtitle> subtitles, String fileName) throws Exception {
-		if (subtitles.size() == 0) {
-			return "empty";
-		}
+
 		String assContent = createAssStringBySubtitles(subtitles);
 		File tempFile = File.createTempFile(fileName, ".ass");
 
@@ -193,12 +266,11 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	protected List<Path> getSegementPathList(String uuid) {
 		List<Path> result = new ArrayList<>();
-		String projectRootPath = System.getProperty("user.dir");
-		Path directory = Paths.get(projectRootPath);
+
 		int index = 0;
 
 		while (true) {
-			Path filePath = directory.resolve(String.format("%s[%03d].mov", uuid, index));
+			Path filePath = Paths.get(CURRENT_WORKING_DIR + String.format("/%03d.mov", index));
 			if (Files.exists(filePath)) {
 				result.add(filePath);
 			} else {
@@ -211,20 +283,33 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	private String createAssStringBySubtitles(List<Subtitle> subtitles) {
 		StringBuilder assContent = new StringBuilder(subtitleHeader.getAssHeader());
+		if (subtitles != null) {
+			for (Subtitle subtitle : subtitles) {
+				String startTime = millisecondsToTimeCode(subtitle.getStartTime());
+				String endTime = millisecondsToTimeCode(subtitle.getEndTime());
 
-		for (Subtitle subtitle : subtitles) {
-			String startTime = millisecondsToTimeCode(subtitle.getStartTime());
-			String endTime = millisecondsToTimeCode(subtitle.getEndTime());
-			String position = subtitle.getPositionX() + "," + subtitle.getPositionY();
+				StringBuilder textBuilder = new StringBuilder();
+				textBuilder.append("{\\pos(")
+					.append(subtitle.getPositionX())
+					.append(',')
+					.append(subtitle.getPositionY())
+					.append(")\\fs")
+					.append(20.0f * subtitle.getScale())
+					.append("\\c")
+					.append(convertToASSColor(subtitle.getColor()))
+					.append('}')
+					.append(subtitle.getText());
 
-			float adjustedFontSize = 20.0f * subtitle.getScale();
-			String colorInAssFormat = convertToASSColor(subtitle.getColor());
-			String text =
-				"{\\pos(" + position + ")\\fs" + adjustedFontSize + "\\c" + colorInAssFormat + "}" + subtitle.getText();
-
-			assContent.append(
-				"Dialogue: " + subtitle.getZIndex() + "," + startTime + "," + endTime + ",Default,,0,0,0,," + text
-					+ "\n");
+				assContent.append("Dialogue: ")
+					.append(subtitle.getZIndex())
+					.append(',')
+					.append(startTime)
+					.append(',')
+					.append(endTime)
+					.append(",Default,,0,0,0,,")
+					.append(textBuilder)
+					.append('\n');
+			}
 		}
 		return assContent.toString();
 	}
@@ -256,7 +341,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 				.addArguments("-f", "segment")
 				.addArguments("-segment_time", String.valueOf(perSegmentSec))
 				.addArguments("-segment_time_delta", "0.05")
-				.addArguments("-reset_timestamps", "1")
+				.addArgument("-copyts")
 				.addArguments("-map", "[outv]")
 				.addArguments("-map", "[outa]"))
 			.execute();
