@@ -56,6 +56,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	private final VideoSegmentRepository videoSegmentRepository;
 	private final VideoRepository videoRepository;
 	private final DynamoService dynamoService;
+	private final KinesisProducerService kinesisProducerService;
 
 	@Override
 	public String processVideo(Long videoId, int width, int height, String folderPath) throws Exception {
@@ -149,8 +150,11 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		videoSegmentRepository.saveAll(videoSegmentList);
 
 		List<VideoEncodingDynamoTable> videoEncodingDynamoTableList = saveJopToDynamoDB(videoSegmentList);
-		
-		
+
+		kinesisProducerService.publishUuidListToKinesis(
+			videoEncodingDynamoTableList.stream()
+				.map(VideoEncodingDynamoTable::getId)
+				.collect(Collectors.toList()));
 
 	}
 
@@ -167,7 +171,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 					.build());
 			}
 		}
-		 dynamoService.videoEncodingListBatchSave(videoEncodingDynamoTableList);
+		dynamoService.videoEncodingListBatchSave(videoEncodingDynamoTableList);
 		return videoEncodingDynamoTableList;
 	}
 
