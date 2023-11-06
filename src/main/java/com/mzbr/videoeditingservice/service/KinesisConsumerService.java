@@ -31,12 +31,10 @@ import software.amazon.awssdk.services.kinesis.model.ShardIteratorType;
 @RequiredArgsConstructor
 @Slf4j
 public class KinesisConsumerService {
-	private final KinesisClient kinesisClient;
 	private final KinesisAsyncClient kinesisAsyncClient;
-	private final DynamoDbAsyncClient dynamoDbAsyncClient;
-	private final DynamoDbClient dynamoDbClient;
+	private final DynamoService dynamoService;
 
-	@Value("${cloud.aws.kinesis.name}")
+	@Value("${cloud.aws.kinesis.consumer-name}")
 	private String STREAM_NAME;
 
 	private static final String JOB_TABLE = "video-editing-table";
@@ -103,10 +101,7 @@ public class KinesisConsumerService {
 		Long id = Long.parseLong(idString);
 
 		try {
-			GetItemResponse getItemResponse = dynamoDbClient.getItem(GetItemRequest.builder()
-				.tableName(JOB_TABLE)
-				.key(Collections.singletonMap(JOB_ID, AttributeValue.builder().n(String.valueOf(id)).build()))
-				.build());
+			GetItemResponse getItemResponse = dynamoService.getItemResponse(JOB_TABLE, JOB_ID, id);
 			if (getItemResponse.item() == null || getItemResponse.item().isEmpty()) {
 				throw new IllegalStateException("Job with ID " + id + " does not exist.");
 			}
@@ -123,7 +118,6 @@ public class KinesisConsumerService {
 
 				})
 				.exceptionally(ex -> {
-					// 예외가 발생한 경우 실패 상태로 업데이트합니다.
 					updateJobStatus(id, FAILED_STATUS);
 					return null;
 				});
@@ -136,15 +130,7 @@ public class KinesisConsumerService {
 	}
 
 	private void updateJobStatus(long id, String newStatus) {
-		UpdateItemResponse updateItemResponse = dynamoDbClient.updateItem(UpdateItemRequest.builder()
-			.tableName(JOB_TABLE)
-			.key(Collections.singletonMap(JOB_ID, AttributeValue.builder().n(String.valueOf(id)).build()))
-			.updateExpression("SET #status = :newStatus")
-			.expressionAttributeNames(Collections.singletonMap("#status", STATUS)) // 추가된 부분
-			.expressionAttributeValues(
-				Collections.singletonMap(":newStatus", AttributeValue.builder().s(newStatus).build()))
-			.build());
-
+		dynamoService.updateStatus(JOB_TABLE, JOB_ID, STATUS, id, newStatus);
 	}
 
 	private CompletableFuture<Void> processJob(long id) {
