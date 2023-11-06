@@ -34,6 +34,7 @@ dependencies {
     implementation group: 'software.amazon.awssdk', name: 's3', version: '2.21.7'
     implementation group: 'software.amazon.awssdk', name: 'kinesis', version: '2.21.13'
     implementation group: 'software.amazon.awssdk', name: 'dynamodb', version: '2.21.12'
+    implementation group: 'software.amazon.awssdk', name: 'dynamodb-enhanced', version: '2.21.15'
 
 //    developmentOnly 'org.springframework.boot:spring-boot-devtools'
     annotationProcessor 'org.projectlombok:lombok'
