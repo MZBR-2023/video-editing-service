@@ -1,10 +1,10 @@
 package com.mzbr.videoeditingservice.service;
 
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
@@ -47,7 +47,11 @@ public class KinesisConsumerService {
 	private static final String IN_PROGRESS_STATUS = "in_progress";
 	private static final String COMPLETED_STATUS = "completed";
 	private static final String FAILED_STATUS = "failed";
+	private static final int WIDTH = 720;
+	private static final int HEIGHT = 1280;
+	private static final String FOLDER_PATH = "editing-videos";
 
+	private final VideoEditingServiceImpl videoEditingService;
 
 	@PostConstruct
 	public void init() {
@@ -58,7 +62,6 @@ public class KinesisConsumerService {
 			.shards()
 			.get(0)
 			.shardId();
-
 
 		String shardIterator = kinesisAsyncClient.getShardIterator(GetShardIteratorRequest.builder()
 				.streamName(STREAM_NAME)
@@ -71,10 +74,11 @@ public class KinesisConsumerService {
 	}
 
 	private void pollShard(String shardIterator) {
-		CompletableFuture<GetRecordsResponse> getRecordsFuture = kinesisAsyncClient.getRecords(GetRecordsRequest.builder()
-			.shardIterator(shardIterator)
-			.limit(1000)
-			.build());
+		CompletableFuture<GetRecordsResponse> getRecordsFuture = kinesisAsyncClient.getRecords(
+			GetRecordsRequest.builder()
+				.shardIterator(shardIterator)
+				.limit(1000)
+				.build());
 
 		getRecordsFuture.thenAcceptAsync(getRecordsResponse -> {
 			getRecordsResponse.records().forEach(record -> {
@@ -95,7 +99,6 @@ public class KinesisConsumerService {
 		});
 	}
 
-
 	private void updateAndProcessJob(String idString) {
 		Long id = Long.parseLong(idString);
 
@@ -113,9 +116,17 @@ public class KinesisConsumerService {
 			}
 			updateJobStatus(id, IN_PROGRESS_STATUS);
 
-			processJob(id);
+			CompletableFuture<Void> future = processJob(id);
 
-			updateJobStatus(id, COMPLETED_STATUS);
+			future.thenRun(() -> {
+				updateJobStatus(id, COMPLETED_STATUS);
+
+				})
+				.exceptionally(ex -> {
+					// 예외가 발생한 경우 실패 상태로 업데이트합니다.
+					updateJobStatus(id, FAILED_STATUS);
+					return null;
+				});
 		} catch (IllegalStateException e) {
 			log.info(e.getMessage());
 		} catch (Exception e) {
@@ -130,13 +141,23 @@ public class KinesisConsumerService {
 			.key(Collections.singletonMap(JOB_ID, AttributeValue.builder().n(String.valueOf(id)).build()))
 			.updateExpression("SET #status = :newStatus")
 			.expressionAttributeNames(Collections.singletonMap("#status", STATUS)) // 추가된 부분
-			.expressionAttributeValues(Collections.singletonMap(":newStatus", AttributeValue.builder().s(newStatus).build()))
+			.expressionAttributeValues(
+				Collections.singletonMap(":newStatus", AttributeValue.builder().s(newStatus).build()))
 			.build());
 
 	}
 
 	private CompletableFuture<Void> processJob(long id) {
-		//비즈니스 로직 들어가야 함
-		return CompletableFuture.completedFuture(null);
+		return CompletableFuture.runAsync(() -> {
+			try {
+				videoEditingService.processVideo(id, WIDTH, HEIGHT, FOLDER_PATH);
+			} catch (Exception e) {
+				throw new RuntimeException(e.getMessage());
+			}
+		}).exceptionally(e -> {
+				log.error(e.getMessage());
+				return null;
+			}
+		);
 	}
 }
