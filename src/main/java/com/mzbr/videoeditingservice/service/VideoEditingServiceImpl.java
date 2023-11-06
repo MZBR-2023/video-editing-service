@@ -18,6 +18,7 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import com.github.kokorin.jaffree.ffmpeg.*;
@@ -37,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Primary
 public class VideoEditingServiceImpl implements VideoEditingService {
 
 	protected final S3Util s3Util;

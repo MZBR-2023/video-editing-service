@@ -33,6 +33,7 @@ import software.amazon.awssdk.services.kinesis.model.ShardIteratorType;
 public class KinesisConsumerService {
 	private final KinesisAsyncClient kinesisAsyncClient;
 	private final DynamoService dynamoService;
+	private final VideoEditingServiceImpl videoEditingService;
 
 	@Value("${cloud.aws.kinesis.consumer-name}")
 	private String STREAM_NAME;
@@ -49,7 +50,7 @@ public class KinesisConsumerService {
 	private static final int HEIGHT = 1280;
 	private static final String FOLDER_PATH = "editing-videos";
 
-	private final VideoEditingServiceImpl videoEditingService;
+
 
 	@PostConstruct
 	public void init() {

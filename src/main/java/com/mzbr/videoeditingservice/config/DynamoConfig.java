@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -33,6 +34,13 @@ public class DynamoConfig {
 			.region(Region.AP_NORTHEAST_2)
 			.credentialsProvider(
 				StaticCredentialsProvider.create(AwsBasicCredentials.create(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)))
+			.build();
+	}
+
+	@Bean
+	public DynamoDbEnhancedClient dynamoDbEnhancedClient(){
+		return DynamoDbEnhancedClient.builder()
+			.dynamoDbClient(dynamoDbClient())
 			.build();
 	}
 
