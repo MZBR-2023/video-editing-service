@@ -2,6 +2,7 @@ package com.mzbr.videoeditingservice.dynamo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +24,12 @@ public class DynamoTest {
 		List<VideoEncodingDynamoTable> videoEncodingDynamoTableList = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
 			videoEncodingDynamoTableList.add(VideoEncodingDynamoTable.builder()
-					.id(Long.valueOf(i))
+					.id(UUID.randomUUID().toString())
+					.rdbId((long)i)
 					.format("test")
 					.status("wait")
 				.build());
 		}
-		dynamoService.videoEncodingListBatchSave(videoEncodingDynamoTableList,"video-encoding-table");
+		dynamoService.videoEncodingListBatchSave(videoEncodingDynamoTableList);
 	}
 }

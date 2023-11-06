@@ -25,6 +25,7 @@ import com.mzbr.videoeditingservice.model.VideoEntity;
 import com.mzbr.videoeditingservice.model.VideoSegment;
 import com.mzbr.videoeditingservice.repository.VideoRepository;
 import com.mzbr.videoeditingservice.repository.VideoSegmentRepository;
+import com.mzbr.videoeditingservice.service.DynamoService;
 import com.mzbr.videoeditingservice.service.VideoEditingServiceImpl;
 import com.mzbr.videoeditingservice.util.S3Util;
 
@@ -37,8 +38,8 @@ public class LocalVideoEditingService extends VideoEditingServiceImpl {
 	@Autowired
 	public LocalVideoEditingService(S3Util s3Util, SubtitleHeader subtitleHeader, VideoSegmentRepository videoSegmentRepository,
 		VideoRepository videoRepository,
-		ResourceLoader resourceLoader) {
-		super(s3Util, subtitleHeader, videoSegmentRepository,videoRepository);
+		ResourceLoader resourceLoader, DynamoService dynamoService) {
+		super(s3Util, subtitleHeader, videoSegmentRepository,videoRepository, dynamoService);
 		this.resourceLoader = resourceLoader;
 	}
 

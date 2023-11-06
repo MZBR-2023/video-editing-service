@@ -11,10 +11,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -23,9 +23,11 @@ import org.springframework.stereotype.Service;
 
 import com.github.kokorin.jaffree.ffmpeg.*;
 import com.mzbr.videoeditingservice.component.SubtitleHeader;
+import com.mzbr.videoeditingservice.enums.EncodeFormat;
 import com.mzbr.videoeditingservice.model.Audio;
 import com.mzbr.videoeditingservice.model.Clip;
 import com.mzbr.videoeditingservice.model.Subtitle;
+import com.mzbr.videoeditingservice.model.VideoEncodingDynamoTable;
 import com.mzbr.videoeditingservice.model.VideoEntity;
 import com.mzbr.videoeditingservice.model.VideoSegment;
 import com.mzbr.videoeditingservice.repository.VideoRepository;
@@ -51,9 +53,9 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	@Value("${cloud.aws.url}")
 	private String S3_URL;
 
-
 	private final VideoSegmentRepository videoSegmentRepository;
 	private final VideoRepository videoRepository;
+	private final DynamoService dynamoService;
 
 	@Override
 	public String processVideo(Long videoId, int width, int height, String folderPath) throws Exception {
@@ -83,7 +85,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		uploadTempFileToS3(pathList, folderPath + "/" + videoEntity.getVideoUuid());
 
 		//DB에 비디오 세그먼트 데이터 저장
-		saveVideoSegment(folderPath, videoEntity, pathList);
+		persistAndSendVideoSegment(folderPath, videoEntity, pathList);
 
 		//m3u8파일 제작 후 업로드
 		createAndUploadM3U8(videoEntity, pathList.size());
@@ -96,7 +98,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	private void createAndUploadM3U8(VideoEntity videoEntity, int size) {
 
-		String[] versions = {"P144","P360","P480","P720"};
+		String[] versions = {"P144", "P360", "P480", "P720"};
 		List<Path> pathList = new ArrayList<>();
 		for (String version : versions) {
 			StringBuilder m3u8Content = new StringBuilder();
@@ -105,12 +107,14 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 			m3u8Content.append("#EXT-X-TARGETDURATION:5\n");
 			for (int i = 0; i < size; i++) {
 				m3u8Content.append("#EXTINF:5,\n");
-				m3u8Content.append(S3_URL +ENCODED_FOLDER + "/" + videoEntity.getVideoUuid() + "/"+version+"/" + String.format("%03d.ts",i));
+				m3u8Content.append(
+					S3_URL + ENCODED_FOLDER + "/" + videoEntity.getVideoUuid() + "/" + version + "/" + String.format(
+						"%03d.ts", i));
 				m3u8Content.append("\n");
 			}
 			m3u8Content.append("#EXT-X-ENDLIST\n");
 
-			Path m3u8FilePath = Paths.get(version+".m3u8") ;
+			Path m3u8FilePath = Paths.get(version + ".m3u8");
 			try (BufferedWriter writer = Files.newBufferedWriter(m3u8FilePath)) {
 				writer.write(m3u8Content.toString());
 			} catch (IOException e) {
@@ -118,7 +122,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 			}
 			pathList.add(m3u8FilePath);
 		}
-		s3Util.uploadLocalFileByStringFormat(pathList,ENCODED_FOLDER+"/"+videoEntity.getVideoUuid());
+		s3Util.uploadLocalFileByStringFormat(pathList, ENCODED_FOLDER + "/" + videoEntity.getVideoUuid());
 
 		for (Path path : pathList) {
 			try {
@@ -131,7 +135,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	}
 
-	private void saveVideoSegment(String folderPath, VideoEntity videoEntity, List<Path> pathList) {
+	private void persistAndSendVideoSegment(String folderPath, VideoEntity videoEntity, List<Path> pathList) {
 		List<VideoSegment> videoSegmentList = new ArrayList<>();
 		for (int i = 0; i < pathList.size(); i++) {
 			videoSegmentList.add(VideoSegment.builder()
@@ -143,6 +147,28 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 				.build());
 		}
 		videoSegmentRepository.saveAll(videoSegmentList);
+
+		List<VideoEncodingDynamoTable> videoEncodingDynamoTableList = saveJopToDynamoDB(videoSegmentList);
+		
+		
+
+	}
+
+	private List<VideoEncodingDynamoTable> saveJopToDynamoDB(List<VideoSegment> videoSegmentList) {
+		List<VideoEncodingDynamoTable> videoEncodingDynamoTableList = new ArrayList<>();
+		for (VideoSegment videoSegment : videoSegmentList) {
+
+			for (EncodeFormat encodeFormat : EncodeFormat.values()) {
+				videoEncodingDynamoTableList.add(VideoEncodingDynamoTable.builder()
+					.id(UUID.randomUUID().toString())
+					.rdbId(videoSegment.getId())
+					.status("waiting")
+					.format(encodeFormat.name())
+					.build());
+			}
+		}
+		 dynamoService.videoEncodingListBatchSave(videoEncodingDynamoTableList);
+		return videoEncodingDynamoTableList;
 	}
 
 	private StringBuilder generateFilter(VideoEntity videoEntity, int width, int height, String assPath) throws

@@ -3,6 +3,7 @@ package com.mzbr.videoeditingservice.service;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.mzbr.videoeditingservice.model.VideoEncodingDynamoTable;
@@ -24,6 +25,9 @@ import software.amazon.awssdk.services.dynamodb.model.UpdateItemResponse;
 public class DynamoService {
 	private final DynamoDbClient dynamoDbClient;
 	private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
+
+	@Value("${cloud.dynamo.encoding-table}")
+	private String ENCODING_TABLE_NAME;
 	private final TableSchema<VideoEncodingDynamoTable> tableSchema = TableSchema.fromBean(
 		VideoEncodingDynamoTable.class);
 
@@ -46,10 +50,9 @@ public class DynamoService {
 			.build());
 	}
 
-	public void videoEncodingListBatchSave(List<VideoEncodingDynamoTable> videoEncodingDynamoTableList,
-		String tableName) {
+	public void videoEncodingListBatchSave(List<VideoEncodingDynamoTable> videoEncodingDynamoTableList) {
 
-		DynamoDbTable<VideoEncodingDynamoTable> table = dynamoDbEnhancedClient.table(tableName, tableSchema);
+		DynamoDbTable<VideoEncodingDynamoTable> table = dynamoDbEnhancedClient.table(ENCODING_TABLE_NAME, tableSchema);
 		TransactWriteItemsEnhancedRequest.Builder transactWriteItemsEnhancedRequest = TransactWriteItemsEnhancedRequest.builder();
 
 		for (VideoEncodingDynamoTable videoEncodingDynamoTable : videoEncodingDynamoTableList) {
