@@ -17,7 +17,7 @@ import software.amazon.awssdk.services.kinesis.model.PutRecordResponse;
 @ActiveProfiles("ssafy")
 public class KinesisProducerTest {
 
-	@Value("${cloud.aws.kinesis.name}")
+	@Value("${cloud.aws.kinesis.consumer-name}")
 	private String STREAM_NAME;
 	private String partitionKey = "test"; // 파티션 키를 지정합니다.
 

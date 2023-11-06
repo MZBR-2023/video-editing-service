@@ -1,5 +1,6 @@
 package com.mzbr.videoeditingservice.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -13,4 +14,7 @@ public interface VideoRepository extends JpaRepository<VideoEntity, Long> {
 
 	@EntityGraph(value = "VideoEntity.all", type = EntityGraph.EntityGraphType.FETCH)
 	Optional<VideoEntity> findById(Long id);
+
+	@EntityGraph(value = "VideoEntity.all", type = EntityGraph.EntityGraphType.FETCH)
+	List<VideoEntity> findAll();
 }

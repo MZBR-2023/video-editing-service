@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -196,14 +197,14 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		List<Input> inputs = prepareVideoInputs(videoEntity.getClips());
 
 		if (videoEntity.hasAudio()) {
-			inputs.add(insertAudioToVideo(videoEntity.getUserUploadAudioEntity()));
+			inputs.add(insertAudioToVideo(videoEntity.getAudio()));
 		}
 		return inputs;
 
 	}
 
 	@Override
-	public List<Input> prepareVideoInputs(List<Clip> clips) throws Exception {
+	public List<Input> prepareVideoInputs(Set<Clip> clips) throws Exception {
 		List<Input> inputs = new ArrayList<>();
 		Map<Long, String> presignMap = s3Util.getClipsPresignedUrlMap(clips);
 
@@ -217,10 +218,11 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	}
 
 	@Override
-	public String generateVideoCropAndLayoutFilter(List<Clip> clips, Integer scaleX, Integer scaleY) throws Exception {
+	public String generateVideoCropAndLayoutFilter(Set<Clip> clips, Integer scaleX, Integer scaleY) throws Exception {
 		StringJoiner filterJoiner = new StringJoiner(";");
-		for (int i = 0; i < clips.size(); i++) {
-			Clip clip = clips.get(i);
+
+		int i=0;
+		for (Clip clip : clips) {
 			StringBuilder baseFilter = new StringBuilder();
 			baseFilter.append(String.format("[%d:v]setpts=PTS-STARTPTS", i));
 
@@ -232,19 +234,22 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 			}
 			baseFilter.append(String.format(",scale=%d:%d", scaleX, scaleY));
 			filterJoiner.add(baseFilter + String.format("[v%d]", i));
+			i++;
 		}
 		return filterJoiner.toString();
 	}
 
 	@Override
-	public String generateVideoVolumeFilter(List<Clip> clips) throws Exception {
+	public String generateVideoVolumeFilter(Set<Clip> clips) throws Exception {
 		StringJoiner filterJoiner = new StringJoiner(";");
-		for (int i = 0; i < clips.size(); i++) {
-			Clip clip = clips.get(i);
+		int i=0;
+		for (Clip clip : clips) {
 			if (clip.getVolume() != null) {
 				filterJoiner.add(String.format("[%d:a]volume=%.2f[a%d]", i, clip.getVolume(), i));
 			}
+			i++;
 		}
+
 		return filterJoiner.toString();
 	}
 
@@ -273,11 +278,15 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	@Override
 	public Input insertAudioToVideo(Audio audio) throws Exception {
-		return UrlInput.fromUrl("\"" + s3Util.getPresigndUrl(audio.getUrl()) + "\"");
+		return UrlInput.fromUrl("\"" +
+			s3Util.getPresigndUrl(
+				audio.getUrl()
+			)
+			+ "\"");
 	}
 
 	@Override
-	public String generateASSBySubtitles(List<Subtitle> subtitles, String fileName) throws Exception {
+	public String generateASSBySubtitles(Set<Subtitle> subtitles, String fileName) throws Exception {
 
 		String assContent = createAssStringBySubtitles(subtitles);
 		File tempFile = File.createTempFile(fileName, ".ass");
@@ -313,7 +322,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		return result;
 	}
 
-	private String createAssStringBySubtitles(List<Subtitle> subtitles) {
+	private String createAssStringBySubtitles(Set<Subtitle> subtitles) {
 		StringBuilder assContent = new StringBuilder(subtitleHeader.getAssHeader());
 		if (subtitles != null) {
 			for (Subtitle subtitle : subtitles) {

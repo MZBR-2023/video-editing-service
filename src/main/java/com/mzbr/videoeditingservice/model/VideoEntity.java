@@ -1,7 +1,10 @@
 package com.mzbr.videoeditingservice.model;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -15,8 +18,11 @@ import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Getter
 @Entity
@@ -24,11 +30,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @Table(name = "video")
+@ToString
+@EqualsAndHashCode(callSuper=false)
 @NamedEntityGraph(name = "VideoEntity.all"
 	, attributeNodes = {
 	@NamedAttributeNode(value = "clips", subgraph = "clips.subgraph"),
 	@NamedAttributeNode(value = "userUploadAudioEntity"),
-	@NamedAttributeNode(value = "selectedServerAudioEntity", subgraph = "selectedServerAudioEntity.subgraph")
+	@NamedAttributeNode(value = "selectedServerAudioEntity", subgraph = "selectedServerAudioEntity.subgraph"),
+	@NamedAttributeNode(value = "subtitles"),
 },
 	subgraphs = {
 		@NamedSubgraph(name = "clips.subgraph", attributeNodes = @NamedAttributeNode("crop")),
@@ -45,10 +54,10 @@ public class VideoEntity {
 	String thumbnailUrl;
 
 	@OneToMany(mappedBy = "videoEntity")
-	List<Clip> clips;
+	Set<Clip> clips;
 
 	@OneToMany(mappedBy = "videoEntity")
-	List<Subtitle> subtitles;
+	Set<Subtitle> subtitles;
 
 	@OneToOne(mappedBy = "videoEntity")
 	UserUploadAudioEntity userUploadAudioEntity;
@@ -73,5 +82,4 @@ public class VideoEntity {
 		return clips.stream().mapToInt(Clip::getDurationTime)
 			.sum();
 	}
-
 }

@@ -2,6 +2,7 @@ package com.mzbr.videoeditingservice.service;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 
 import com.github.kokorin.jaffree.ffmpeg.FFmpeg;
 import com.github.kokorin.jaffree.ffmpeg.Input;
@@ -15,11 +16,11 @@ public interface VideoEditingService {
 
 	String processVideo(Long videoId, int width, int height, String folderPath) throws Exception;
 
-	List<Input> prepareVideoInputs(List<Clip> clips) throws Exception;
+	List<Input> prepareVideoInputs(Set<Clip> clips) throws Exception;
 
-	String generateVideoCropAndLayoutFilter(List<Clip> clips, Integer scaleX, Integer scaleY) throws Exception;
+	String generateVideoCropAndLayoutFilter(Set<Clip> clips, Integer scaleX, Integer scaleY) throws Exception;
 
-	String generateVideoVolumeFilter(List<Clip> clips) throws Exception;
+	String generateVideoVolumeFilter(Set<Clip> clips) throws Exception;
 
 	String generateAudioFilter(Audio audio, int totalDurationTime, int clipCount) throws Exception;
 
@@ -27,7 +28,7 @@ public interface VideoEditingService {
 
 	Input insertAudioToVideo(Audio audio) throws Exception;
 
-	String generateASSBySubtitles(List<Subtitle> subtitles, String fileName) throws Exception;
+	String generateASSBySubtitles(Set<Subtitle> subtitles, String fileName) throws Exception;
 
 	void executeSplitVideoIntoSegments(FFmpeg fFmpeg, int perSegmentSec, String filter, String outputPath) throws
 		Exception;

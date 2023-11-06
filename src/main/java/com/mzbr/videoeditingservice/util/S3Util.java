@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -40,7 +41,7 @@ public class S3Util {
 		}
 	}
 
-	public Map<Long, String> getClipsPresignedUrlMap(List<Clip> clips) {
+	public Map<Long, String> getClipsPresignedUrlMap(Set<Clip> clips) {
 		Map<Long, String> resultMap = new HashMap<>();
 		for (Clip clip : clips) {
 			resultMap.put(clip.getId(), getPresigndUrl(clip.getUrl()));

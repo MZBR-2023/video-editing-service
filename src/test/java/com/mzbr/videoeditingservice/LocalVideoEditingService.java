@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +82,7 @@ public class LocalVideoEditingService extends VideoEditingServiceImpl {
 	}
 
 	@Override
-	public List<Input> prepareVideoInputs(List<Clip> clips) throws Exception {
+	public List<Input> prepareVideoInputs(Set<Clip> clips) throws Exception {
 		List<Input> inputs = new ArrayList<>();
 
 		for (Clip clip : clips) {

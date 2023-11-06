@@ -1,6 +1,7 @@
 package com.mzbr.videoeditingservice.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -8,6 +9,7 @@ import javax.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,8 +51,6 @@ public class KinesisConsumerService {
 	private static final int WIDTH = 720;
 	private static final int HEIGHT = 1280;
 	private static final String FOLDER_PATH = "editing-videos";
-
-
 
 	@PostConstruct
 	public void init() {
@@ -98,36 +98,30 @@ public class KinesisConsumerService {
 		});
 	}
 
-	private void updateAndProcessJob(String idString) {
+	@Async
+	public CompletableFuture<Void> updateAndProcessJob(String idString) {
 		Long id = Long.parseLong(idString);
+		return CompletableFuture.runAsync(() -> {
 
-		try {
-			GetItemResponse getItemResponse = dynamoService.getItemResponse(JOB_TABLE, JOB_ID, id);
-			if (getItemResponse.item() == null || getItemResponse.item().isEmpty()) {
-				throw new IllegalStateException("Job with ID " + id + " does not exist.");
-			}
-			AttributeValue statusValue = getItemResponse.item().get(STATUS);
-			if (statusValue == null || !WAITING_STATUS.equals(statusValue.s())) {
-				return;
-			}
-			updateJobStatus(id, IN_PROGRESS_STATUS);
+				GetItemResponse getItemResponse = dynamoService.getItemResponse(JOB_TABLE, JOB_ID, id);
+				if (getItemResponse.item() == null || getItemResponse.item().isEmpty()) {
+					throw new IllegalStateException("Job with ID " + id + " does not exist.");
+				}
+				AttributeValue statusValue = getItemResponse.item().get(STATUS);
+				if (statusValue == null || !WAITING_STATUS.equals(statusValue.s())) {
+					return;
+				}
+				updateJobStatus(id, IN_PROGRESS_STATUS);
 
-			CompletableFuture<Void> future = processJob(id);
+			}).thenCompose(unused ->
+				processJob(id)
+			).thenRun(() -> updateJobStatus(id, COMPLETED_STATUS))
 
-			future.thenRun(() -> {
-				updateJobStatus(id, COMPLETED_STATUS);
+			.exceptionally(e -> {
+				updateJobStatus(id, FAILED_STATUS);
+				return null;
+			});
 
-				})
-				.exceptionally(ex -> {
-					updateJobStatus(id, FAILED_STATUS);
-					return null;
-				});
-		} catch (IllegalStateException e) {
-			log.info(e.getMessage());
-		} catch (Exception e) {
-			log.info(e.getMessage());
-			updateJobStatus(id, FAILED_STATUS);
-		}
 	}
 
 	private void updateJobStatus(long id, String newStatus) {
@@ -139,12 +133,14 @@ public class KinesisConsumerService {
 			try {
 				videoEditingService.processVideo(id, WIDTH, HEIGHT, FOLDER_PATH);
 			} catch (Exception e) {
+				e.printStackTrace();
 				throw new RuntimeException(e.getMessage());
 			}
-		}).exceptionally(e -> {
-				log.error(e.getMessage());
-				return null;
+		}).handle((result, throwable) -> {
+			if (throwable != null) {
+				throw new CompletionException(throwable); // Wrap and rethrow the exception
 			}
-		);
+			return null; // Return null for Void
+		});
 	}
 }
