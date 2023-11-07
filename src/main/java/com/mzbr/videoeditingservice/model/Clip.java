@@ -1,5 +1,7 @@
 package com.mzbr.videoeditingservice.model;
 
+import java.util.Objects;
+
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -12,6 +14,8 @@ import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -29,10 +33,10 @@ public class Clip {
 	String name;
 	String url;
 
-	@OneToOne(mappedBy = "clip", fetch = FetchType.EAGER)
+	@OneToOne(mappedBy = "clip")
 	Crop crop;
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "video_id")
 	VideoEntity videoEntity;
 

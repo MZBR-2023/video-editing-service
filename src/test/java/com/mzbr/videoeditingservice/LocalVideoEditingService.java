@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,8 @@ import com.mzbr.videoeditingservice.model.VideoEntity;
 import com.mzbr.videoeditingservice.model.VideoSegment;
 import com.mzbr.videoeditingservice.repository.VideoRepository;
 import com.mzbr.videoeditingservice.repository.VideoSegmentRepository;
+import com.mzbr.videoeditingservice.service.DynamoService;
+import com.mzbr.videoeditingservice.service.KinesisProducerService;
 import com.mzbr.videoeditingservice.service.VideoEditingServiceImpl;
 import com.mzbr.videoeditingservice.util.S3Util;
 
@@ -37,8 +40,8 @@ public class LocalVideoEditingService extends VideoEditingServiceImpl {
 	@Autowired
 	public LocalVideoEditingService(S3Util s3Util, SubtitleHeader subtitleHeader, VideoSegmentRepository videoSegmentRepository,
 		VideoRepository videoRepository,
-		ResourceLoader resourceLoader) {
-		super(s3Util, subtitleHeader, videoSegmentRepository,videoRepository);
+		ResourceLoader resourceLoader, DynamoService dynamoService, KinesisProducerService kinesisProducerService) {
+		super(s3Util, subtitleHeader, videoSegmentRepository,videoRepository, dynamoService, kinesisProducerService);
 		this.resourceLoader = resourceLoader;
 	}
 
@@ -79,7 +82,7 @@ public class LocalVideoEditingService extends VideoEditingServiceImpl {
 	}
 
 	@Override
-	public List<Input> prepareVideoInputs(List<Clip> clips) throws Exception {
+	public List<Input> prepareVideoInputs(Set<Clip> clips) throws Exception {
 		List<Input> inputs = new ArrayList<>();
 
 		for (Clip clip : clips) {
