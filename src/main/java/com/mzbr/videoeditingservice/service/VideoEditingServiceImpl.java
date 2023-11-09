@@ -18,6 +18,8 @@ import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
@@ -28,9 +30,11 @@ import com.mzbr.videoeditingservice.enums.EncodeFormat;
 import com.mzbr.videoeditingservice.model.Audio;
 import com.mzbr.videoeditingservice.model.Clip;
 import com.mzbr.videoeditingservice.model.Subtitle;
+import com.mzbr.videoeditingservice.model.TempVideo;
 import com.mzbr.videoeditingservice.model.VideoEncodingDynamoTable;
 import com.mzbr.videoeditingservice.model.VideoEntity;
 import com.mzbr.videoeditingservice.model.VideoSegment;
+import com.mzbr.videoeditingservice.repository.TempVideoRepository;
 import com.mzbr.videoeditingservice.repository.VideoRepository;
 import com.mzbr.videoeditingservice.repository.VideoSegmentRepository;
 import com.mzbr.videoeditingservice.util.S3Util;
@@ -58,6 +62,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	private final VideoRepository videoRepository;
 	private final DynamoService dynamoService;
 	private final KinesisProducerService kinesisProducerService;
+	private final TempVideoRepository tempVideoRepository;
 
 	@Override
 	public String processVideo(Long videoId, int width, int height, String folderPath) throws Exception {
@@ -92,10 +97,42 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		//m3u8파일 제작 후 업로드
 		createAndUploadM3U8(videoEntity, pathList.size());
 
-		//임시 파일 삭제
+		// 임시 파일 삭제
 		deleteTemporaryFile(pathList, assPath);
 
 		return null;
+	}
+
+	@Override
+	@Transactional
+	public String tempVideoProcess(String videoName, String folderPath) throws Exception {
+		TempVideo tempVideo = tempVideoRepository.findByVideoName(videoName);
+
+		String fileName = tempVideo.getVideoName();
+		if (tempVideo.getTempCrop() == null) {
+			tempVideo.updateAfterCropUrl(tempVideo.getOriginVideoUrl());
+			return tempVideo.getAfterCropUrl();
+		}
+
+		FFmpeg fFmpeg = FFmpeg.atPath();
+		fFmpeg.addInput(UrlInput.fromUrl("\"" + s3Util.getPresigndUrl(tempVideo.getOriginVideoUrl()) + "\""));
+		fFmpeg.addOutput(UrlOutput.toPath(Path.of(fileName)));
+
+		fFmpeg.addArguments("-vf", String.format("crop=%d:%d:%d:%d",
+			tempVideo.getTempCrop().getWidth(),
+			tempVideo.getTempCrop().getHeight(),
+			tempVideo.getTempCrop().getX(),
+			tempVideo.getTempCrop().getY()
+		)).addArguments("-c:v", "libx264");
+
+		fFmpeg.execute();
+
+		Path filePath = Paths.get(CURRENT_WORKING_DIR + "/" + fileName);
+		String uploadUrl = s3Util.uploadLocalFile(filePath, folderPath + "/" + fileName);
+
+		tempVideo.updateAfterCropUrl(uploadUrl);
+
+		return uploadUrl;
 	}
 
 	private void createAndUploadM3U8(VideoEntity videoEntity, int size) {
@@ -221,7 +258,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	public String generateVideoCropAndLayoutFilter(Set<Clip> clips, Integer scaleX, Integer scaleY) throws Exception {
 		StringJoiner filterJoiner = new StringJoiner(";");
 
-		int i=0;
+		int i = 0;
 		for (Clip clip : clips) {
 			StringBuilder baseFilter = new StringBuilder();
 			baseFilter.append(String.format("[%d:v]setpts=PTS-STARTPTS", i));
@@ -242,7 +279,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	@Override
 	public String generateVideoVolumeFilter(Set<Clip> clips) throws Exception {
 		StringJoiner filterJoiner = new StringJoiner(";");
-		int i=0;
+		int i = 0;
 		for (Clip clip : clips) {
 			if (clip.getVolume() != null) {
 				filterJoiner.add(String.format("[%d:a]volume=%.2f[a%d]", i, clip.getVolume(), i));
