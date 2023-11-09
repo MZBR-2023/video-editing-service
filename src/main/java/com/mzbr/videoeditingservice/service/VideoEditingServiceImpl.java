@@ -106,31 +106,44 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	@Override
 	@Transactional
 	public String tempVideoProcess(String videoName, String folderPath) throws Exception {
-		TempVideo tempVideo = tempVideoRepository.findByVideoName(videoName);
+		String uploadUrl = "";
+		Path filePath = null;
+		try {
+			TempVideo tempVideo = tempVideoRepository.findByVideoName(videoName);
 
-		String fileName = tempVideo.getVideoName();
-		if (tempVideo.getTempCrop() == null) {
-			tempVideo.updateAfterCropUrl(tempVideo.getOriginVideoUrl());
-			return tempVideo.getAfterCropUrl();
+			String fileName = tempVideo.getVideoName();
+			if (tempVideo.getTempCrop() == null) {
+				tempVideo.updateAfterCropUrl(tempVideo.getOriginVideoUrl());
+				return tempVideo.getAfterCropUrl();
+			}
+
+			FFmpeg fFmpeg = FFmpeg.atPath();
+			fFmpeg.addInput(UrlInput.fromUrl("\"" + s3Util.getPresigndUrl(tempVideo.getOriginVideoUrl()) + "\""));
+			fFmpeg.addOutput(UrlOutput.toPath(Path.of(fileName)));
+
+			fFmpeg.addArguments("-vf", String.format("crop=%d:%d:%d:%d",
+				tempVideo.getTempCrop().getWidth(),
+				tempVideo.getTempCrop().getHeight(),
+				tempVideo.getTempCrop().getX(),
+				tempVideo.getTempCrop().getY()
+			)).addArguments("-c:v", "libx264");
+
+			fFmpeg.execute();
+
+			filePath = Paths.get(CURRENT_WORKING_DIR + "/" + fileName);
+			uploadUrl = s3Util.uploadLocalFile(filePath, folderPath + "/" + fileName);
+
+			tempVideo.updateAfterCropUrl(uploadUrl);
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			try {
+				Files.delete(filePath);
+			} catch (IOException e) {
+
+			}
+
 		}
-
-		FFmpeg fFmpeg = FFmpeg.atPath();
-		fFmpeg.addInput(UrlInput.fromUrl("\"" + s3Util.getPresigndUrl(tempVideo.getOriginVideoUrl()) + "\""));
-		fFmpeg.addOutput(UrlOutput.toPath(Path.of(fileName)));
-
-		fFmpeg.addArguments("-vf", String.format("crop=%d:%d:%d:%d",
-			tempVideo.getTempCrop().getWidth(),
-			tempVideo.getTempCrop().getHeight(),
-			tempVideo.getTempCrop().getX(),
-			tempVideo.getTempCrop().getY()
-		)).addArguments("-c:v", "libx264");
-
-		fFmpeg.execute();
-
-		Path filePath = Paths.get(CURRENT_WORKING_DIR + "/" + fileName);
-		String uploadUrl = s3Util.uploadLocalFile(filePath, folderPath + "/" + fileName);
-
-		tempVideo.updateAfterCropUrl(uploadUrl);
 
 		return uploadUrl;
 	}
