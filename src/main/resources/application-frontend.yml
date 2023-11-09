@@ -1,0 +1,14 @@
+spring:
+  config:
+    import: s3-local.yml, subtitle-local.yml, kinesis-local.yml, dynamo-local.yml, database-local.yml
+  jpa:
+    hibernate:
+      ddl-auto: update
+      show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+    generate-ddl: true
+
+encoded-folder:
+  prefix: "encoded-video"

@@ -40,7 +40,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-jdbc'
-//    implementation group: 'org.mariadb.jdbc', name: 'mariadb-java-client', version: '3.2.0'
+    implementation group: 'org.mariadb.jdbc', name: 'mariadb-java-client', version: '3.2.0'
     implementation group: 'com.github.kokorin.jaffree', name: 'jaffree', version: '0'
     implementation group: 'org.springframework.data', name: 'spring-data-jpa'
     implementation group: 'com.h2database', name: 'h2'
