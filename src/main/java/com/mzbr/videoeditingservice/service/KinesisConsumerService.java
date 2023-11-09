@@ -1,6 +1,7 @@
 package com.mzbr.videoeditingservice.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,7 @@ import software.amazon.awssdk.services.kinesis.model.ShardIteratorType;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Profile({"ssafy","prod"})
 public class KinesisConsumerService {
 	private final KinesisAsyncClient kinesisAsyncClient;
 	private final DynamoService dynamoService;
