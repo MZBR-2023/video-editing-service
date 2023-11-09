@@ -9,12 +9,12 @@ import com.github.kokorin.jaffree.ffmpeg.Input;
 import com.mzbr.videoeditingservice.model.Audio;
 import com.mzbr.videoeditingservice.model.Clip;
 import com.mzbr.videoeditingservice.model.Subtitle;
-import com.mzbr.videoeditingservice.model.VideoEntity;
 
 public interface VideoEditingService {
 
 
 	String processVideo(Long videoId, int width, int height, String folderPath) throws Exception;
+	String tempVideoProcess(String videoName, String folderPath) throws Exception;
 
 	List<Input> prepareVideoInputs(Set<Clip> clips) throws Exception;
 
