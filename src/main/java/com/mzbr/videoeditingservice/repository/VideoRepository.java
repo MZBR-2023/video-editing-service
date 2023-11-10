@@ -15,6 +15,10 @@ public interface VideoRepository extends JpaRepository<VideoEntity, Long> {
 	@EntityGraph(value = "VideoEntity.all", type = EntityGraph.EntityGraphType.FETCH)
 	Optional<VideoEntity> findById(Long id);
 
+	Optional<VideoEntity> findByVideoUuid(String uuid);
+
 	@EntityGraph(value = "VideoEntity.all", type = EntityGraph.EntityGraphType.FETCH)
 	List<VideoEntity> findAll();
+
+
 }

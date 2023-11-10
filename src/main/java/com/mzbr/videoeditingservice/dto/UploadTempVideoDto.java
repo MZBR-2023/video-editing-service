@@ -4,6 +4,7 @@ import lombok.Data;
 @Data
 public class UploadTempVideoDto {
 	String videoName;
+	String videoUuid;
 
 	Crop crop;
 

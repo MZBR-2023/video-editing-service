@@ -8,8 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.mzbr.videoeditingservice.dto.UploadTempVideoDto;
 import com.mzbr.videoeditingservice.model.TempCrop;
 import com.mzbr.videoeditingservice.model.TempVideo;
+import com.mzbr.videoeditingservice.model.VideoEntity;
 import com.mzbr.videoeditingservice.repository.TempCropRepository;
 import com.mzbr.videoeditingservice.repository.TempVideoRepository;
+import com.mzbr.videoeditingservice.repository.VideoRepository;
 import com.mzbr.videoeditingservice.util.S3Util;
 
 import lombok.RequiredArgsConstructor;
@@ -21,12 +23,15 @@ public class TempVideoServiceImpl implements TempVideoService {
 
 	private final TempVideoRepository tempVideoRepository;
 	private final TempCropRepository tempCropRepository;
-
+	private final VideoRepository videoRepository;
 	@Override
 	@Transactional
 	public String UploadTempVideo(UploadTempVideoDto uploadTempVideoDto) {
+		VideoEntity videoEntity = videoRepository.findByVideoUuid(uploadTempVideoDto.getVideoUuid()).orElseThrow();
+
 		TempVideo tempVideo = TempVideo.builder()
 			.videoName(uploadTempVideoDto.getVideoName())
+			.videoEntity(videoEntity)
 			.build();
 
 		tempVideoRepository.save(tempVideo);

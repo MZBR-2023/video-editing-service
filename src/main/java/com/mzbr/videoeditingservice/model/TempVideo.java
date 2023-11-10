@@ -5,6 +5,8 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
@@ -31,6 +33,10 @@ public class TempVideo {
 
 	@OneToOne(mappedBy = "tempVideo",fetch = FetchType.LAZY)
 	TempCrop tempCrop;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "video_id")
+	VideoEntity videoEntity;
 
 	public void updateAfterCropUrl(String afterCropUrl) {
 		this.afterCropUrl=afterCropUrl;
