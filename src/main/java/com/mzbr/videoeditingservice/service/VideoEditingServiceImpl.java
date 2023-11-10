@@ -173,14 +173,22 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	}
 
 	@Override
-	public String processTempPreview(TempPreviewDto tempPreviewDto) throws Exception {
-		String outputPath = UUID.randomUUID() + ".mp4";
+	public String processTempPreview(TempPreviewDto tempPreviewDto, Integer memberId) throws Exception {
+		Optional<Member> member = memberRepository.findById(memberId);
+		if(member.isEmpty()){
+			throw new MemberException("사용자의 엔티티가 아닙니다.");
+		}
+
+		String outputPath = tempPreviewDto.getVersionId() + ".mp4";
 
 		//versionId를 확인하여 db에 있는지 확인
 		Optional<TempPreview> tempPreviewCheck = tempPreviewRepository.findById(tempPreviewDto.getVersionId());
 
 		//있으면 영상 url 반환
 		if (tempPreviewCheck.isPresent()) {
+			if (tempPreviewCheck.get().getMember().getId() != memberId) {
+				throw new MemberException("사용자의 엔티티가 아닙니다.");
+			}
 			return tempPreviewCheck.get().getS3Url();
 		}
 
@@ -250,6 +258,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		TempPreview tempPreview = TempPreview.builder()
 			.id(tempPreviewDto.getVersionId())
 			.s3Url(url)
+			.member(member.get())
 			.build();
 		tempPreviewRepository.save(tempPreview);
 

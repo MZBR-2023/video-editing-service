@@ -30,26 +30,30 @@ public class VideoController {
 	private final TempVideoService tempVideoUploadService;
 	private final VideoEditingService videoEditingService;
 	private final S3Util s3Util;
-	@PostMapping("/temp/upload")
-	public ResponseEntity uploadTempVideo(@RequestBody UploadTempVideoDto uploadTempVideoDto,  @MemberId Integer memberId) {
-		String url =  tempVideoUploadService.UploadTempVideo(uploadTempVideoDto, memberId);
 
-		UrlDto urlDto = new UrlDto(uploadTempVideoDto.getVideoUuid(), url);
+	@PostMapping("/temp/upload")
+	public ResponseEntity uploadTempVideo(@RequestBody UploadTempVideoDto uploadTempVideoDto,
+		@MemberId Integer memberId) {
+		String url = tempVideoUploadService.UploadTempVideo(uploadTempVideoDto, memberId);
+
+		UrlDto urlDto = new UrlDto(url);
 		return new ResponseEntity(urlDto, HttpStatus.CREATED);
 	}
 
 	@PostMapping("/temp/upload-complete")
-	public ResponseEntity uploadTempVideoComplete(@RequestBody UploadCompleteRequestDto uploadCompleteRequestDto,  @MemberId Integer memberId) throws Exception {
-		String url = videoEditingService.tempVideoProcess(uploadCompleteRequestDto.getVideoName(),"crop", memberId);
+	public ResponseEntity uploadTempVideoComplete(@RequestBody UploadCompleteRequestDto uploadCompleteRequestDto,
+		@MemberId Integer memberId) throws Exception {
+		String url = videoEditingService.tempVideoProcess(uploadCompleteRequestDto.getVideoName(), "crop", memberId);
 
-		UrlDto urlDto = new UrlDto(uploadCompleteRequestDto.getVideoUuid(), url);
+		UrlDto urlDto = new UrlDto(url);
 		return new ResponseEntity(urlDto, HttpStatus.OK);
 
 	}
 
 	@PostMapping("/preview-video")
-	public ResponseEntity generateOrGetPreviewVideo(@RequestBody TempPreviewDto tempPreviewDto) throws Exception{
-		String url = videoEditingService.processTempPreview(tempPreviewDto);
+	public ResponseEntity generateOrGetPreviewVideo(@RequestBody TempPreviewDto tempPreviewDto,
+		@MemberId Integer memberId) throws Exception {
+		String url = videoEditingService.processTempPreview(tempPreviewDto, memberId);
 
 		Map<String, String> response = new HashMap<>();
 		response.put("url", s3Util.fileUrl(url));
@@ -58,7 +62,8 @@ public class VideoController {
 
 	//영상 제작 시작
 	@PostMapping("/{video-uuid}/process-start")
-	public ResponseEntity videoProcessStart(@PathVariable(name = "video-uuid") String videoUuid, @MemberId Integer memberId) {
+	public ResponseEntity videoProcessStart(@PathVariable(name = "video-uuid") String videoUuid,
+		@MemberId Integer memberId) {
 		videoEditingService.videoProcessStart(memberId, videoUuid);
 
 		return new ResponseEntity(HttpStatus.CREATED);
