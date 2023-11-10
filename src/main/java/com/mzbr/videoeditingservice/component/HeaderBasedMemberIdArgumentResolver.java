@@ -21,7 +21,7 @@ public class HeaderBasedMemberIdArgumentResolver implements HandlerMethodArgumen
 	@Override
 	public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
 		NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
-		String memberId = webRequest.getHeader("member_id");
+		String memberId = webRequest.getHeader("member-id");
 		return memberId != null ? Integer.parseInt(memberId) : null;
 	}
 }
