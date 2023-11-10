@@ -1,6 +1,7 @@
 package com.mzbr.videoeditingservice.model;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -28,7 +29,7 @@ public class TempVideo {
 	private String originVideoUrl;
 	private String afterCropUrl;
 
-	@OneToOne(mappedBy = "tempVideo")
+	@OneToOne(mappedBy = "tempVideo",fetch = FetchType.LAZY)
 	TempCrop tempCrop;
 
 	public void updateAfterCropUrl(String afterCropUrl) {
