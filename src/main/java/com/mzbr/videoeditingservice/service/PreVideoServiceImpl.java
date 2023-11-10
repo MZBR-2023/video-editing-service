@@ -5,6 +5,8 @@ package com.mzbr.videoeditingservice.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.mzbr.videoeditingservice.dto.PreVideoEditingRequestDto;
+import com.mzbr.videoeditingservice.dto.PreVideoEditingResponseDto;
 import com.mzbr.videoeditingservice.dto.UploadTempVideoDto;
 import com.mzbr.videoeditingservice.exception.MemberException;
 import com.mzbr.videoeditingservice.model.TempCrop;
@@ -19,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class TempVideoServiceImpl implements TempVideoService {
+public class PreVideoServiceImpl implements PreVideoService {
 	private final S3Util s3Util;
 
 	private final TempVideoRepository tempVideoRepository;
@@ -27,7 +29,7 @@ public class TempVideoServiceImpl implements TempVideoService {
 	private final VideoRepository videoRepository;
 	@Override
 	@Transactional
-	public String UploadTempVideo(UploadTempVideoDto uploadTempVideoDto, Integer memberId) {
+	public String uploadTempVideo(UploadTempVideoDto uploadTempVideoDto, Integer memberId) {
 		VideoEntity videoEntity = videoRepository.findByVideoUuid(uploadTempVideoDto.getVideoUuid()).orElseThrow();
 		if (videoEntity.getMember().getId() != memberId) {
 			throw new MemberException("사용자의 엔티티가 아닙니다.");
@@ -56,6 +58,14 @@ public class TempVideoServiceImpl implements TempVideoService {
 
 
 		return url;
+	}
+
+	@Override
+	public PreVideoEditingResponseDto getThumbnailAndAudioUploadPresignUrl(PreVideoEditingRequestDto preVideoEditingRequestDto) {
+		PreVideoEditingResponseDto preVideoEditingResponseDto = new PreVideoEditingResponseDto();
+		preVideoEditingResponseDto.setAudioUrl(s3Util.generatePresignedUrl(preVideoEditingRequestDto.getAudioFileName()));
+		preVideoEditingResponseDto.setThumbnailUrl(s3Util.generatePresignedUrl(preVideoEditingRequestDto.getThumbnailFileName()));
+		return null;
 	}
 
 }
