@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mzbr.videoeditingservice.dto.UploadTempVideoDto;
+import com.mzbr.videoeditingservice.exception.MemberException;
 import com.mzbr.videoeditingservice.model.TempCrop;
 import com.mzbr.videoeditingservice.model.TempVideo;
 import com.mzbr.videoeditingservice.model.VideoEntity;
@@ -26,8 +27,11 @@ public class TempVideoServiceImpl implements TempVideoService {
 	private final VideoRepository videoRepository;
 	@Override
 	@Transactional
-	public String UploadTempVideo(UploadTempVideoDto uploadTempVideoDto) {
+	public String UploadTempVideo(UploadTempVideoDto uploadTempVideoDto, Integer memberId) {
 		VideoEntity videoEntity = videoRepository.findByVideoUuid(uploadTempVideoDto.getVideoUuid()).orElseThrow();
+		if (videoEntity.getMember().getId() != memberId) {
+			throw new MemberException("사용자의 엔티티가 아닙니다.");
+		}
 
 		TempVideo tempVideo = TempVideo.builder()
 			.videoName(uploadTempVideoDto.getVideoName())

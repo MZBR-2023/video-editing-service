@@ -1,0 +1,13 @@
+package com.mzbr.videoeditingservice.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UrlDto {
+	String videoUuid;
+	String url;
+}

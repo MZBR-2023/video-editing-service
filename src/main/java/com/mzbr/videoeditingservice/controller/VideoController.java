@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.mzbr.videoeditingservice.annotation.MemberId;
 import com.mzbr.videoeditingservice.dto.TempPreviewDto;
 import com.mzbr.videoeditingservice.dto.UploadTempVideoDto;
+import com.mzbr.videoeditingservice.dto.UrlDto;
 import com.mzbr.videoeditingservice.service.TempVideoService;
 import com.mzbr.videoeditingservice.service.VideoEditingService;
 import com.mzbr.videoeditingservice.util.S3Util;
@@ -28,16 +29,15 @@ public class VideoController {
 	private final VideoEditingService videoEditingService;
 	private final S3Util s3Util;
 	@PostMapping("/temp/upload")
-	public ResponseEntity uploadTempVideo(@RequestBody UploadTempVideoDto uploadTempVideoDto) {
-		String url =  tempVideoUploadService.UploadTempVideo(uploadTempVideoDto);
+	public ResponseEntity uploadTempVideo(@RequestBody UploadTempVideoDto uploadTempVideoDto,  @MemberId Integer memberId) {
+		String url =  tempVideoUploadService.UploadTempVideo(uploadTempVideoDto, memberId);
 
-		Map<String, String> response = new HashMap<>();
-		response.put("url", url);
-		return new ResponseEntity(response, HttpStatus.CREATED);
+		UrlDto urlDto = new UrlDto(uploadTempVideoDto.getVideoUuid(), url);
+		return new ResponseEntity(urlDto, HttpStatus.CREATED);
 	}
 
 	@PostMapping("/temp/upload/{video-name}/upload-complete")
-	public ResponseEntity uploadTempVideoComplete(@PathVariable(value = "video-name") String videoName) throws Exception {
+	public ResponseEntity uploadTempVideoComplete(@PathVariable(value = "video-name") String videoName,  @MemberId Integer memberId) throws Exception {
 		String url = videoEditingService.tempVideoProcess(videoName,"crop");
 
 		Map<String, String> response = new HashMap<>();
