@@ -1,5 +1,6 @@
 package com.mzbr.videoeditingservice.service;
 
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
@@ -21,16 +23,23 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.github.kokorin.jaffree.LogLevel;
 import com.github.kokorin.jaffree.ffmpeg.*;
 import com.mzbr.videoeditingservice.component.SubtitleHeader;
+import com.mzbr.videoeditingservice.dto.TempPreviewDto;
 import com.mzbr.videoeditingservice.enums.EncodeFormat;
 import com.mzbr.videoeditingservice.model.Audio;
 import com.mzbr.videoeditingservice.model.Clip;
 import com.mzbr.videoeditingservice.model.Subtitle;
+import com.mzbr.videoeditingservice.model.TempPreview;
+import com.mzbr.videoeditingservice.model.TempVideo;
 import com.mzbr.videoeditingservice.model.VideoEncodingDynamoTable;
 import com.mzbr.videoeditingservice.model.VideoEntity;
 import com.mzbr.videoeditingservice.model.VideoSegment;
+import com.mzbr.videoeditingservice.repository.TempPreviewRepository;
+import com.mzbr.videoeditingservice.repository.TempVideoRepository;
 import com.mzbr.videoeditingservice.repository.VideoRepository;
 import com.mzbr.videoeditingservice.repository.VideoSegmentRepository;
 import com.mzbr.videoeditingservice.util.S3Util;
@@ -58,6 +67,8 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	private final VideoRepository videoRepository;
 	private final DynamoService dynamoService;
 	private final KinesisProducerService kinesisProducerService;
+	private final TempVideoRepository tempVideoRepository;
+	private final TempPreviewRepository tempPreviewRepository;
 
 	@Override
 	public String processVideo(Long videoId, int width, int height, String folderPath) throws Exception {
@@ -92,10 +103,148 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		//m3u8파일 제작 후 업로드
 		createAndUploadM3U8(videoEntity, pathList.size());
 
-		//임시 파일 삭제
+		// 임시 파일 삭제
 		deleteTemporaryFile(pathList, assPath);
 
 		return null;
+	}
+
+	@Override
+	@Transactional
+	public String tempVideoProcess(String videoName, String folderPath) throws Exception {
+		String uploadUrl = "";
+		Path filePath = null;
+		Path beforeEditFile = null;
+		try {
+			TempVideo tempVideo = tempVideoRepository.findByVideoName(videoName);
+
+			String fileName = tempVideo.getVideoName();
+			if (tempVideo.getTempCrop() == null) {
+				tempVideo.updateAfterCropUrl(tempVideo.getOriginVideoUrl());
+				return tempVideo.getAfterCropUrl();
+			}
+
+			FFmpeg fFmpeg = FFmpeg.atPath();
+			fFmpeg.setLogLevel(LogLevel.DEBUG);
+			beforeEditFile = s3Util.getFileToLocalDirectory(tempVideo.getOriginVideoUrl());
+			fFmpeg.addInput(UrlInput.fromPath(beforeEditFile));
+			fFmpeg.addOutput(UrlOutput.toPath(Path.of(fileName)));
+
+			fFmpeg.addArguments("-vf", String.format("crop=%d:%d:%d:%d",
+				tempVideo.getTempCrop().getWidth(),
+				tempVideo.getTempCrop().getHeight(),
+				tempVideo.getTempCrop().getX(),
+				tempVideo.getTempCrop().getY()
+			)).addArguments("-c:v", "libx264");
+
+			fFmpeg.execute();
+
+			filePath = Paths.get(CURRENT_WORKING_DIR + "/" + fileName);
+			uploadUrl = s3Util.uploadLocalFile(filePath, folderPath + "/" + fileName);
+
+			tempVideo.updateAfterCropUrl(uploadUrl);
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			try {
+				Files.delete(filePath);
+				Files.delete(beforeEditFile);
+			} catch (Exception e) {
+				log.error(e.getMessage());
+
+			}
+
+		}
+
+		return uploadUrl;
+	}
+
+	@Override
+	public String processTempPreview(TempPreviewDto tempPreviewDto) throws Exception {
+		String outputPath = UUID.randomUUID().toString() + ".mp4";
+
+		//versionId를 확인하여 db에 있는지 확인
+		Optional<TempPreview> tempPreviewCheck = tempPreviewRepository.findById(tempPreviewDto.getVersionId());
+
+		//있으면 영상 url 반환
+		if (tempPreviewCheck.isPresent()) {
+			return tempPreviewCheck.get().getS3Url();
+		}
+
+		//없으면 영상 제작
+		//비디오 UUID를 기준으로 비디오 리스트 생성
+		List<TempVideo> videos = tempPreviewDto.getVideoNameList().stream()
+			.map(name -> tempVideoRepository.findByVideoName(name))
+			.collect(Collectors.toList());
+		//영상의 url을 기반으로 s3에서 영상을 다운 받고 path 리스트를 만듦
+
+		FFmpeg fFmpeg = FFmpeg.atPath();
+		List<Path> videoPathList = new ArrayList<>();
+		for (TempVideo video : videos) {
+			videoPathList.add(s3Util.getFileToLocalDirectory(video.getAfterCropUrl()));
+		}
+		for (Path path : videoPathList) {
+			fFmpeg.addInput(UrlInput.fromPath(path));
+		}
+
+
+		List<FilterChain> filterChains = new ArrayList<>();
+
+		FilterGraph filterGraph = new FilterGraph();
+
+		for (int i = 0; i < videoPathList.size(); i++) {
+			filterGraph.addFilterChain(FilterChain.of(
+				Filter.withName("setpts").addArgument("PTS-STARTPTS").addInputLink(i + ":v").addOutputLink("vt" + i),
+				Filter.withName("scale")
+					.addArgument("width", "720")
+					.addArgument("height", "1280")
+					.addInputLink("vt" + i)
+					.addOutputLink("v" + i)
+			));
+			filterGraph.addFilterChain(FilterChain.of(
+				Filter.withName("asetpts").addArgument("PTS-STARTPTS").addInputLink(i + ":a").addOutputLink("a" + i)
+
+			));
+
+		}
+		for (FilterChain filterChain : filterChains) {
+			filterGraph.addFilterChain(filterChain);
+		}
+
+		GenericFilter concatFilter = Filter.withName("concat")
+			.addArgument("n", String.valueOf(videoPathList.size()))
+			.addArgument("v", "1")
+			.addArgument("a", "1")
+			.addOutputLink("v_concat")
+			.addOutputLink("a_concat");
+		for (int i = 0; i < videoPathList.size(); i++) {
+			concatFilter.addInputLink("v" + i);
+			concatFilter.addInputLink("a" + i);
+		}
+		filterGraph.addFilterChain(FilterChain.of(concatFilter)
+		);
+		fFmpeg.setComplexFilter(filterGraph);
+		fFmpeg.addOutput(UrlOutput.toUrl(outputPath))
+			.addArguments("-map", "[v_concat]")
+			.addArguments("-map", "[a_concat]")
+			.execute();
+
+		Path path = Paths.get(CURRENT_WORKING_DIR + "/" + outputPath);
+		videoPathList.add(path);
+
+		//s3에 업로드 후 url 반환
+		String url = s3Util.uploadLocalFile(path, "preview/" + outputPath);
+
+		//임시 파일 삭제 기능
+		deleteTemporaryFile(videoPathList, "");
+
+		TempPreview tempPreview = TempPreview.builder()
+			.id(tempPreviewDto.getVersionId())
+			.s3Url(url)
+			.build();
+		tempPreviewRepository.save(tempPreview);
+
+		return url;
 	}
 
 	private void createAndUploadM3U8(VideoEntity videoEntity, int size) {
@@ -221,7 +370,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	public String generateVideoCropAndLayoutFilter(Set<Clip> clips, Integer scaleX, Integer scaleY) throws Exception {
 		StringJoiner filterJoiner = new StringJoiner(";");
 
-		int i=0;
+		int i = 0;
 		for (Clip clip : clips) {
 			StringBuilder baseFilter = new StringBuilder();
 			baseFilter.append(String.format("[%d:v]setpts=PTS-STARTPTS", i));
@@ -242,7 +391,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	@Override
 	public String generateVideoVolumeFilter(Set<Clip> clips) throws Exception {
 		StringJoiner filterJoiner = new StringJoiner(";");
-		int i=0;
+		int i = 0;
 		for (Clip clip : clips) {
 			if (clip.getVolume() != null) {
 				filterJoiner.add(String.format("[%d:a]volume=%.2f[a%d]", i, clip.getVolume(), i));
@@ -271,7 +420,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 			filterBuilder.append("[a_concat][a_special]amix=inputs=2:duration=first[outa]");
 			return filterBuilder.toString();
 		}
-		filterBuilder.append(String.format("concat=n=%d:v=1:a=1[v_concat][outa];", clipCount));
+		filterBuilder.append(String.format("concat=n=%d:v=1:a=1[v_concat][outa]", clipCount));
 
 		return filterBuilder.toString();
 	}

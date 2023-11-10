@@ -1,21 +1,17 @@
 spring:
-  h2:
-    console:
-      enabled: true
-  datasource:
-    url: jdbc:h2:mem:test
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
-    hibernate:
-      ddl-auto: create
   config:
-    import: s3-local.yml, subtitle-local.yml, kinesis-local.yml, dynamo-local.yml
-logging:
-  level:
-    com.mzbr: DEBUG
+    import: s3-local.yml, subtitle-local.yml, kinesis-local.yml, dynamo-local.yml, database-local.yml
+  jpa:
+    hibernate:
+      ddl-auto: update
+      show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+    generate-ddl: true
+
+#  level:
+#    com.mzbr: DEBUG
 #    root: DEBUG
 encoded-folder:
   prefix: "encoded-video"

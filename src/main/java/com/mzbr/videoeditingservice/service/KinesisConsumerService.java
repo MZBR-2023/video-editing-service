@@ -1,28 +1,22 @@
 package com.mzbr.videoeditingservice.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
-import software.amazon.awssdk.services.dynamodb.model.ReturnValue;
-import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.UpdateItemResponse;
 import software.amazon.awssdk.services.kinesis.KinesisAsyncClient;
-import software.amazon.awssdk.services.kinesis.KinesisClient;
 import software.amazon.awssdk.services.kinesis.model.GetRecordsRequest;
 import software.amazon.awssdk.services.kinesis.model.GetRecordsResponse;
 import software.amazon.awssdk.services.kinesis.model.GetShardIteratorRequest;
@@ -32,6 +26,7 @@ import software.amazon.awssdk.services.kinesis.model.ShardIteratorType;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Profile({"ssafy","prod"})
 public class KinesisConsumerService {
 	private final KinesisAsyncClient kinesisAsyncClient;
 	private final DynamoService dynamoService;
@@ -101,31 +96,33 @@ public class KinesisConsumerService {
 	@Async
 	public CompletableFuture<Void> updateAndProcessJob(String idString) {
 		Long id = Long.parseLong(idString);
-		return CompletableFuture.runAsync(() -> {
-
-				GetItemResponse getItemResponse = dynamoService.getItemResponse(JOB_TABLE, JOB_ID, id);
-				if (getItemResponse.item() == null || getItemResponse.item().isEmpty()) {
-					throw new IllegalStateException("Job with ID " + id + " does not exist.");
-				}
-				AttributeValue statusValue = getItemResponse.item().get(STATUS);
-				if (statusValue == null || !WAITING_STATUS.equals(statusValue.s())) {
-					return;
-				}
-				updateJobStatus(id, IN_PROGRESS_STATUS);
-
-			}).thenCompose(unused ->
-				processJob(id)
-			).thenRun(() -> updateJobStatus(id, COMPLETED_STATUS))
-
-			.exceptionally(e -> {
-				updateJobStatus(id, FAILED_STATUS);
+		return CompletableFuture.supplyAsync(() -> {
+			GetItemResponse getItemResponse = dynamoService.getItemResponse(JOB_TABLE, JOB_ID, id);
+			if (getItemResponse.item() == null || getItemResponse.item().isEmpty()) {
 				return null;
-			});
+			}
+			AttributeValue statusValue = getItemResponse.item().get(STATUS);
+			if (statusValue == null || !WAITING_STATUS.equals(statusValue.s())) {
+				return null;
+			}
+			updateJobStatus(id, IN_PROGRESS_STATUS);
+			return id;
+		}).thenCompose(result -> {
+			if (result == null) {
+				return CompletableFuture.completedFuture(null);
+			}
+			return processJob(id);
+		}).thenRun(() -> {
+			updateJobStatus(id, COMPLETED_STATUS);
+		}).exceptionally(e -> {
+			updateJobStatus(id, FAILED_STATUS);
+			return null;
+		});
 
 	}
 
-	private void updateJobStatus(long id, String newStatus) {
-		dynamoService.updateStatus(JOB_TABLE, JOB_ID, STATUS, id, newStatus);
+	private UpdateItemResponse updateJobStatus(long id, String newStatus) {
+		return dynamoService.updateStatus(JOB_TABLE, JOB_ID, STATUS, id, newStatus);
 	}
 
 	private CompletableFuture<Void> processJob(long id) {
@@ -140,7 +137,7 @@ public class KinesisConsumerService {
 			if (throwable != null) {
 				throw new CompletionException(throwable); // Wrap and rethrow the exception
 			}
-			return null; // Return null for Void
+			return null;
 		});
 	}
 }
