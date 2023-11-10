@@ -6,6 +6,7 @@ import java.util.Set;
 
 import com.github.kokorin.jaffree.ffmpeg.FFmpeg;
 import com.github.kokorin.jaffree.ffmpeg.Input;
+import com.mzbr.videoeditingservice.dto.TempPreviewDto;
 import com.mzbr.videoeditingservice.model.Audio;
 import com.mzbr.videoeditingservice.model.Clip;
 import com.mzbr.videoeditingservice.model.Subtitle;
@@ -16,6 +17,7 @@ public interface VideoEditingService {
 	String processVideo(Long videoId, int width, int height, String folderPath) throws Exception;
 	String tempVideoProcess(String videoName, String folderPath) throws Exception;
 
+	String processTempPreview(TempPreviewDto tempPreviewDto) throws Exception;
 	List<Input> prepareVideoInputs(Set<Clip> clips) throws Exception;
 
 	String generateVideoCropAndLayoutFilter(Set<Clip> clips, Integer scaleX, Integer scaleY) throws Exception;

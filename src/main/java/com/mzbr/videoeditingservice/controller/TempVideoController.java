@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mzbr.videoeditingservice.dto.TempPreviewDto;
 import com.mzbr.videoeditingservice.dto.UploadTempVideoDto;
 import com.mzbr.videoeditingservice.service.TempVideoService;
 import com.mzbr.videoeditingservice.service.VideoEditingService;
@@ -42,5 +43,14 @@ public class TempVideoController {
 		response.put("url", s3Util.fileUrl(url));
 		return new ResponseEntity(response, HttpStatus.CREATED);
 
+	}
+
+	@PostMapping("/preview-video")
+	public ResponseEntity generateOrGetPreviewVideo(@RequestBody TempPreviewDto tempPreviewDto) throws Exception{
+		String url = videoEditingService.processTempPreview(tempPreviewDto);
+
+		Map<String, String> response = new HashMap<>();
+		response.put("url", s3Util.fileUrl(url));
+		return new ResponseEntity(response, HttpStatus.OK);
 	}
 }

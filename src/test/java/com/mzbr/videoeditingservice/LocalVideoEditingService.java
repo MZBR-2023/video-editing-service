@@ -23,18 +23,18 @@ import com.mzbr.videoeditingservice.component.SubtitleHeader;
 import com.mzbr.videoeditingservice.model.Audio;
 import com.mzbr.videoeditingservice.model.Clip;
 import com.mzbr.videoeditingservice.model.VideoEntity;
-import com.mzbr.videoeditingservice.model.VideoSegment;
+import com.mzbr.videoeditingservice.repository.TempPreviewRepository;
 import com.mzbr.videoeditingservice.repository.TempVideoRepository;
 import com.mzbr.videoeditingservice.repository.VideoRepository;
 import com.mzbr.videoeditingservice.repository.VideoSegmentRepository;
 import com.mzbr.videoeditingservice.service.DynamoService;
 import com.mzbr.videoeditingservice.service.KinesisProducerService;
-import com.mzbr.videoeditingservice.service.TempVideoService;
 import com.mzbr.videoeditingservice.service.VideoEditingServiceImpl;
 import com.mzbr.videoeditingservice.util.S3Util;
 
 
 @Component("LocalVideoEditing")
+
 public class LocalVideoEditingService extends VideoEditingServiceImpl {
 	protected static final Logger log = LoggerFactory.getLogger(VideoEditingServiceImpl.class);
 	private final ResourceLoader resourceLoader;
@@ -42,8 +42,8 @@ public class LocalVideoEditingService extends VideoEditingServiceImpl {
 	@Autowired
 	public LocalVideoEditingService(S3Util s3Util, SubtitleHeader subtitleHeader, VideoSegmentRepository videoSegmentRepository,
 		VideoRepository videoRepository,
-		ResourceLoader resourceLoader, DynamoService dynamoService, KinesisProducerService kinesisProducerService, TempVideoRepository tempVideoRepository) {
-		super(s3Util, subtitleHeader, videoSegmentRepository,videoRepository, dynamoService, kinesisProducerService, tempVideoRepository);
+		ResourceLoader resourceLoader, DynamoService dynamoService, KinesisProducerService kinesisProducerService, TempVideoRepository tempVideoRepository, TempPreviewRepository tempPreviewRepository) {
+		super(s3Util, subtitleHeader, videoSegmentRepository,videoRepository, dynamoService, kinesisProducerService, tempVideoRepository, tempPreviewRepository);
 		this.resourceLoader = resourceLoader;
 	}
 
@@ -83,8 +83,10 @@ public class LocalVideoEditingService extends VideoEditingServiceImpl {
 		return null;
 	}
 
+
 	@Override
 	public List<Input> prepareVideoInputs(Set<Clip> clips) throws Exception {
+
 		List<Input> inputs = new ArrayList<>();
 
 		for (Clip clip : clips) {
