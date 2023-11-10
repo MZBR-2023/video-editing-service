@@ -1,11 +1,15 @@
 FROM openjdk:11-jdk-slim-buster
 
-# ffmpeg 설치
 RUN apt-get update && \
-    apt-get install -y ffmpeg && \
+    apt-get install -y --fix-missing ffmpeg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY ./build/libs/*.jar /app.jar
+RUN mkdir /spring
 
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+WORKDIR /spring
+
+
+COPY build/libs/video-editing-service-0.0.1-SNAPSHOT.jar /spring/app.jar
+
+ENTRYPOINT ["java", "-jar", "/spring/app.jar"]
