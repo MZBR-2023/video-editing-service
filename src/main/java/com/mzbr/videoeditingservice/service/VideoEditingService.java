@@ -13,6 +13,7 @@ import com.mzbr.videoeditingservice.model.Subtitle;
 
 public interface VideoEditingService {
 
+	void videoProcessStart(Integer memberId, String videoUuid);
 
 	String processVideo(Long videoId, int width, int height, String folderPath) throws Exception;
 	String tempVideoProcess(String videoName, String folderPath) throws Exception;

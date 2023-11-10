@@ -25,19 +25,20 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.github.kokorin.jaffree.LogLevel;
 import com.github.kokorin.jaffree.ffmpeg.*;
 import com.mzbr.videoeditingservice.component.SubtitleHeader;
 import com.mzbr.videoeditingservice.dto.TempPreviewDto;
 import com.mzbr.videoeditingservice.enums.EncodeFormat;
 import com.mzbr.videoeditingservice.model.Audio;
 import com.mzbr.videoeditingservice.model.Clip;
+import com.mzbr.videoeditingservice.model.Member;
 import com.mzbr.videoeditingservice.model.Subtitle;
 import com.mzbr.videoeditingservice.model.TempPreview;
 import com.mzbr.videoeditingservice.model.TempVideo;
 import com.mzbr.videoeditingservice.model.VideoEncodingDynamoTable;
 import com.mzbr.videoeditingservice.model.VideoEntity;
 import com.mzbr.videoeditingservice.model.VideoSegment;
+import com.mzbr.videoeditingservice.repository.MemberRepository;
 import com.mzbr.videoeditingservice.repository.TempPreviewRepository;
 import com.mzbr.videoeditingservice.repository.TempVideoRepository;
 import com.mzbr.videoeditingservice.repository.VideoRepository;
@@ -69,7 +70,17 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	private final KinesisProducerService kinesisProducerService;
 	private final TempVideoRepository tempVideoRepository;
 	private final TempPreviewRepository tempPreviewRepository;
+	private final MemberRepository memberRepository;
 
+	@Override
+	public void videoProcessStart(Integer memberId, String videoUuid) {
+		Member member = memberRepository.findById(memberId).orElseThrow();
+		VideoEntity videoEntity = VideoEntity.builder()
+			.videoUuid(videoUuid)
+			.member(member)
+			.build();
+		videoRepository.save(videoEntity);
+	}
 	@Override
 	public String processVideo(Long videoId, int width, int height, String folderPath) throws Exception {
 		VideoEntity videoEntity = videoRepository.findById(videoId).orElseThrow();
@@ -85,7 +96,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		//콘텐츠 주입
 		inputContents(videoEntity).forEach(input -> fFmpeg.addInput(input));
 
-		//필터 생성
+
 		StringBuilder filter = generateFilter(videoEntity, width, height, assPath);
 
 		//비디오 생성
@@ -109,6 +120,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		return null;
 	}
 
+
 	@Override
 	@Transactional
 	public String tempVideoProcess(String videoName, String folderPath) throws Exception {
@@ -125,7 +137,6 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 			}
 
 			FFmpeg fFmpeg = FFmpeg.atPath();
-			fFmpeg.setLogLevel(LogLevel.DEBUG);
 			beforeEditFile = s3Util.getFileToLocalDirectory(tempVideo.getOriginVideoUrl());
 			fFmpeg.addInput(UrlInput.fromPath(beforeEditFile));
 			fFmpeg.addOutput(UrlOutput.toPath(Path.of(fileName)));
@@ -161,7 +172,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	@Override
 	public String processTempPreview(TempPreviewDto tempPreviewDto) throws Exception {
-		String outputPath = UUID.randomUUID().toString() + ".mp4";
+		String outputPath = UUID.randomUUID() + ".mp4";
 
 		//versionId를 확인하여 db에 있는지 확인
 		Optional<TempPreview> tempPreviewCheck = tempPreviewRepository.findById(tempPreviewDto.getVersionId());
@@ -188,7 +199,6 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		}
 
 
-		List<FilterChain> filterChains = new ArrayList<>();
 
 		FilterGraph filterGraph = new FilterGraph();
 
@@ -206,9 +216,6 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 			));
 
-		}
-		for (FilterChain filterChain : filterChains) {
-			filterGraph.addFilterChain(filterChain);
 		}
 
 		GenericFilter concatFilter = Filter.withName("concat")

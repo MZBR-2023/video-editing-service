@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mzbr.videoeditingservice.annotation.MemberId;
 import com.mzbr.videoeditingservice.dto.TempPreviewDto;
 import com.mzbr.videoeditingservice.dto.UploadTempVideoDto;
 import com.mzbr.videoeditingservice.service.TempVideoService;
@@ -20,13 +21,13 @@ import com.mzbr.videoeditingservice.util.S3Util;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/temp-video")
+@RequestMapping("/api/v/video")
 @RequiredArgsConstructor
-public class TempVideoController {
+public class VideoController {
 	private final TempVideoService tempVideoUploadService;
 	private final VideoEditingService videoEditingService;
 	private final S3Util s3Util;
-	@PostMapping("/upload")
+	@PostMapping("/temp/upload")
 	public ResponseEntity uploadTempVideo(@RequestBody UploadTempVideoDto uploadTempVideoDto) {
 		String url =  tempVideoUploadService.UploadTempVideo(uploadTempVideoDto);
 
@@ -35,8 +36,8 @@ public class TempVideoController {
 		return new ResponseEntity(response, HttpStatus.CREATED);
 	}
 
-	@PostMapping("/upload/{videoName}/upload-complete")
-	public ResponseEntity uploadTempVideoComplete(@PathVariable String videoName) throws Exception {
+	@PostMapping("/temp/upload/{video-name}/upload-complete")
+	public ResponseEntity uploadTempVideoComplete(@PathVariable(value = "video-name") String videoName) throws Exception {
 		String url = videoEditingService.tempVideoProcess(videoName,"crop");
 
 		Map<String, String> response = new HashMap<>();
@@ -53,4 +54,15 @@ public class TempVideoController {
 		response.put("url", s3Util.fileUrl(url));
 		return new ResponseEntity(response, HttpStatus.OK);
 	}
+
+	//영상 제작 시작
+	@PostMapping("/{video-uuid}/process-start")
+	public ResponseEntity videoProcessStart(@PathVariable(name = "video-uuid") String videoUuid, @MemberId Integer memberId) {
+		videoEditingService.videoProcessStart(memberId, videoUuid);
+
+		return new ResponseEntity(HttpStatus.CREATED);
+	}
+
+	//영상 제작 완료
+
 }
