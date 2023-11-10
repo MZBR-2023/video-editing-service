@@ -1,6 +1,5 @@
 package com.mzbr.videoeditingservice.service;
 
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -28,20 +27,29 @@ import org.springframework.transaction.annotation.Transactional;
 import com.github.kokorin.jaffree.ffmpeg.*;
 import com.mzbr.videoeditingservice.component.SubtitleHeader;
 import com.mzbr.videoeditingservice.dto.TempPreviewDto;
+import com.mzbr.videoeditingservice.dto.VideoEditingRequestDto;
 import com.mzbr.videoeditingservice.enums.EncodeFormat;
 import com.mzbr.videoeditingservice.exception.MemberException;
 import com.mzbr.videoeditingservice.model.Audio;
 import com.mzbr.videoeditingservice.model.Clip;
 import com.mzbr.videoeditingservice.model.Member;
+import com.mzbr.videoeditingservice.model.Store;
 import com.mzbr.videoeditingservice.model.Subtitle;
 import com.mzbr.videoeditingservice.model.TempPreview;
 import com.mzbr.videoeditingservice.model.TempVideo;
+import com.mzbr.videoeditingservice.model.UserUploadAudioEntity;
+import com.mzbr.videoeditingservice.model.VideoData;
 import com.mzbr.videoeditingservice.model.VideoEncodingDynamoTable;
 import com.mzbr.videoeditingservice.model.VideoEntity;
 import com.mzbr.videoeditingservice.model.VideoSegment;
+import com.mzbr.videoeditingservice.repository.ClipRepository;
 import com.mzbr.videoeditingservice.repository.MemberRepository;
+import com.mzbr.videoeditingservice.repository.StoreRepository;
+import com.mzbr.videoeditingservice.repository.SubtitleRepository;
 import com.mzbr.videoeditingservice.repository.TempPreviewRepository;
 import com.mzbr.videoeditingservice.repository.TempVideoRepository;
+import com.mzbr.videoeditingservice.repository.UserUploadAudioRepository;
+import com.mzbr.videoeditingservice.repository.VideoDataRepository;
 import com.mzbr.videoeditingservice.repository.VideoRepository;
 import com.mzbr.videoeditingservice.repository.VideoSegmentRepository;
 import com.mzbr.videoeditingservice.util.S3Util;
@@ -72,6 +80,11 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	private final TempVideoRepository tempVideoRepository;
 	private final TempPreviewRepository tempPreviewRepository;
 	private final MemberRepository memberRepository;
+	private final ClipRepository clipRepository;
+	private final SubtitleRepository subtitleRepository;
+	private final UserUploadAudioRepository userUploadAudioRepository;
+	private final StoreRepository storeRepository;
+	private final VideoDataRepository videoDataRepository;
 
 	@Override
 	public void videoProcessStart(Integer memberId, String videoUuid) {
@@ -82,6 +95,58 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 			.build();
 		videoRepository.save(videoEntity);
 	}
+
+	@Transactional
+	@Override
+	public void videoEditing(VideoEditingRequestDto videoEditingRequestDto, Integer memberId) {
+		VideoEntity videoEntity = videoRepository.findByVideoUuid(videoEditingRequestDto.getVideoUuid()).orElseThrow();
+		Store store = storeRepository.findById(videoEditingRequestDto.getStoreId()).orElseThrow();
+		if (videoEntity.getMember().getId() != memberId) {
+			throw new MemberException("사용자의 엔티티가 아닙니다.");
+		}
+		videoEntity.storeRegister(store);
+
+		List<Clip> clips = new ArrayList<>();
+		for (VideoEditingRequestDto.uploadClip userClip : videoEditingRequestDto.getClips()) {
+			clips.add(Clip.builder()
+				.volume(userClip.getVolume())
+				.url(userClip.getFileName())
+				.videoEntity(videoEntity)
+				.build());
+		}
+		clipRepository.saveAll(clips);
+
+		List<Subtitle> subtitles = new ArrayList<>();
+		for (VideoEditingRequestDto.uploadSubtitle userSubtitle : videoEditingRequestDto.getSubtitles()) {
+			subtitles.add(Subtitle.builder()
+				.color(userSubtitle.getColor())
+				.positionX(userSubtitle.getX())
+				.positionY(userSubtitle.getY())
+				.startTime((int)(userSubtitle.getStartDuration() * 1000))
+				.endTime((int)(userSubtitle.getEndDuration() * 1000))
+				.rotation(userSubtitle.getRotation())
+				.scale(userSubtitle.getScale())
+				.videoEntity(videoEntity)
+				.build());
+		}
+		subtitleRepository.saveAll(subtitles);
+
+		userUploadAudioRepository.save(UserUploadAudioEntity.builder()
+			.url(videoEditingRequestDto.getAudio().getFileName())
+			.videoEntity(videoEntity)
+			.build());
+		videoDataRepository.save(VideoData.builder()
+			.description(videoEditingRequestDto.getDescription())
+			.star(videoEditingRequestDto.getStar())
+			.videoEntity(videoEntity)
+			.build());
+
+		//추후 태그 추가 되어야 함
+
+		//영상 편집 시작
+
+	}
+
 	@Override
 	public String processVideo(Long videoId, int width, int height, String folderPath) throws Exception {
 		VideoEntity videoEntity = videoRepository.findById(videoId).orElseThrow();
@@ -96,7 +161,6 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 		//콘텐츠 주입
 		inputContents(videoEntity).forEach(input -> fFmpeg.addInput(input));
-
 
 		StringBuilder filter = generateFilter(videoEntity, width, height, assPath);
 
@@ -120,7 +184,6 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 		return null;
 	}
-
 
 	@Override
 	@Transactional
@@ -175,7 +238,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	@Override
 	public String processTempPreview(TempPreviewDto tempPreviewDto, Integer memberId) throws Exception {
 		Optional<Member> member = memberRepository.findById(memberId);
-		if(member.isEmpty()){
+		if (member.isEmpty()) {
 			throw new MemberException("사용자의 엔티티가 아닙니다.");
 		}
 
@@ -207,8 +270,6 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		for (Path path : videoPathList) {
 			fFmpeg.addInput(UrlInput.fromPath(path));
 		}
-
-
 
 		FilterGraph filterGraph = new FilterGraph();
 

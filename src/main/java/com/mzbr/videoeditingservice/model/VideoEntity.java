@@ -3,6 +3,7 @@ package com.mzbr.videoeditingservice.model;
 import java.util.Set;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -14,6 +15,8 @@ import javax.persistence.NamedSubgraph;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+
+import com.mzbr.videoeditingservice.repository.StoreRepository;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -58,15 +61,22 @@ public class VideoEntity {
 	@OneToMany(mappedBy = "videoEntity")
 	Set<Subtitle> subtitles;
 
+	@OneToOne(mappedBy = "videoEntity", fetch = FetchType.LAZY)
+	VideoData videoData;
+
 	@OneToOne(mappedBy = "videoEntity")
 	UserUploadAudioEntity userUploadAudioEntity;
 
 	@OneToOne(mappedBy = "videoEntity")
 	SelectedServerAudioEntity selectedServerAudioEntity;
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "memberId")
 	Member member;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name="store_id")
+	Store store;
 
 
 
@@ -84,5 +94,9 @@ public class VideoEntity {
 	public Integer getTotalDuration() {
 		return clips.stream().mapToInt(Clip::getDurationTime)
 			.sum();
+	}
+
+	public void storeRegister(Store store) {
+
 	}
 }

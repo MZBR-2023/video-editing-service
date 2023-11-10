@@ -19,6 +19,7 @@ import com.mzbr.videoeditingservice.dto.TempPreviewDto;
 import com.mzbr.videoeditingservice.dto.UploadCompleteRequestDto;
 import com.mzbr.videoeditingservice.dto.UploadTempVideoDto;
 import com.mzbr.videoeditingservice.dto.UrlDto;
+import com.mzbr.videoeditingservice.dto.VideoEditingRequestDto;
 import com.mzbr.videoeditingservice.service.PreVideoService;
 import com.mzbr.videoeditingservice.service.VideoEditingService;
 import com.mzbr.videoeditingservice.util.S3Util;
@@ -81,5 +82,11 @@ public class VideoController {
 	}
 
 	//영상 제작 완료
+	@PostMapping("/edit")
+	public ResponseEntity videoEditProcessStart(@RequestBody VideoEditingRequestDto videoEditingRequestDto,
+		@MemberId Integer memberId) {
+		videoEditingService.videoEditing(videoEditingRequestDto, memberId);
+		return new ResponseEntity(HttpStatus.OK);
+	}
 
 }

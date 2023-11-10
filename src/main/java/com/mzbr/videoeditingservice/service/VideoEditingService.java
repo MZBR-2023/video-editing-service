@@ -4,9 +4,12 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.github.kokorin.jaffree.ffmpeg.FFmpeg;
 import com.github.kokorin.jaffree.ffmpeg.Input;
 import com.mzbr.videoeditingservice.dto.TempPreviewDto;
+import com.mzbr.videoeditingservice.dto.VideoEditingRequestDto;
 import com.mzbr.videoeditingservice.model.Audio;
 import com.mzbr.videoeditingservice.model.Clip;
 import com.mzbr.videoeditingservice.model.Subtitle;
@@ -14,6 +17,9 @@ import com.mzbr.videoeditingservice.model.Subtitle;
 public interface VideoEditingService {
 
 	void videoProcessStart(Integer memberId, String videoUuid);
+
+	@Transactional
+	void videoEditing(VideoEditingRequestDto videoEditingRequestDto, Integer memberId);
 
 	String processVideo(Long videoId, int width, int height, String folderPath) throws Exception;
 	String tempVideoProcess(String videoName, String folderPath, Integer memberId) throws Exception;
