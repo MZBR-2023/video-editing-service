@@ -16,7 +16,7 @@ public interface VideoEditingService {
 	void videoProcessStart(Integer memberId, String videoUuid);
 
 	String processVideo(Long videoId, int width, int height, String folderPath) throws Exception;
-	String tempVideoProcess(String videoName, String folderPath) throws Exception;
+	String tempVideoProcess(String videoName, String folderPath, Integer memberId) throws Exception;
 
 	String processTempPreview(TempPreviewDto tempPreviewDto) throws Exception;
 	List<Input> prepareVideoInputs(Set<Clip> clips) throws Exception;

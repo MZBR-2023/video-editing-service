@@ -29,6 +29,7 @@ import com.github.kokorin.jaffree.ffmpeg.*;
 import com.mzbr.videoeditingservice.component.SubtitleHeader;
 import com.mzbr.videoeditingservice.dto.TempPreviewDto;
 import com.mzbr.videoeditingservice.enums.EncodeFormat;
+import com.mzbr.videoeditingservice.exception.MemberException;
 import com.mzbr.videoeditingservice.model.Audio;
 import com.mzbr.videoeditingservice.model.Clip;
 import com.mzbr.videoeditingservice.model.Member;
@@ -123,20 +124,22 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	@Override
 	@Transactional
-	public String tempVideoProcess(String videoName, String folderPath) throws Exception {
-		String uploadUrl = "";
+	public String tempVideoProcess(String videoName, String folderPath, Integer memberId) throws Exception {
+		String uploadUrl;
 		Path filePath = null;
 		Path beforeEditFile = null;
+		TempVideo tempVideo = tempVideoRepository.findByVideoName(videoName);
+		if (tempVideo.getVideoEntity().getMember().getId() != memberId) {
+			throw new MemberException("사용자의 엔티티가 아닙니다.");
+		}
+
+		String fileName = tempVideo.getVideoName();
+		if (tempVideo.getTempCrop() == null) {
+			tempVideo.updateAfterCropUrl(tempVideo.getOriginVideoUrl());
+			return tempVideo.getAfterCropUrl();
+		}
+		FFmpeg fFmpeg = FFmpeg.atPath();
 		try {
-			TempVideo tempVideo = tempVideoRepository.findByVideoName(videoName);
-
-			String fileName = tempVideo.getVideoName();
-			if (tempVideo.getTempCrop() == null) {
-				tempVideo.updateAfterCropUrl(tempVideo.getOriginVideoUrl());
-				return tempVideo.getAfterCropUrl();
-			}
-
-			FFmpeg fFmpeg = FFmpeg.atPath();
 			beforeEditFile = s3Util.getFileToLocalDirectory(tempVideo.getOriginVideoUrl());
 			fFmpeg.addInput(UrlInput.fromPath(beforeEditFile));
 			fFmpeg.addOutput(UrlOutput.toPath(Path.of(fileName)));
@@ -152,7 +155,6 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 			filePath = Paths.get(CURRENT_WORKING_DIR + "/" + fileName);
 			uploadUrl = s3Util.uploadLocalFile(filePath, folderPath + "/" + fileName);
-
 			tempVideo.updateAfterCropUrl(uploadUrl);
 		} catch (Exception e) {
 			throw e;

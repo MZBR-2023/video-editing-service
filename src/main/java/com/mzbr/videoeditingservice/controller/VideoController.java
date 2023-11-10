@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.mzbr.videoeditingservice.annotation.MemberId;
 import com.mzbr.videoeditingservice.dto.TempPreviewDto;
+import com.mzbr.videoeditingservice.dto.UploadCompleteRequestDto;
 import com.mzbr.videoeditingservice.dto.UploadTempVideoDto;
 import com.mzbr.videoeditingservice.dto.UrlDto;
+import com.mzbr.videoeditingservice.model.TempVideo;
 import com.mzbr.videoeditingservice.service.TempVideoService;
 import com.mzbr.videoeditingservice.service.VideoEditingService;
 import com.mzbr.videoeditingservice.util.S3Util;
@@ -36,13 +38,12 @@ public class VideoController {
 		return new ResponseEntity(urlDto, HttpStatus.CREATED);
 	}
 
-	@PostMapping("/temp/upload/{video-name}/upload-complete")
-	public ResponseEntity uploadTempVideoComplete(@PathVariable(value = "video-name") String videoName,  @MemberId Integer memberId) throws Exception {
-		String url = videoEditingService.tempVideoProcess(videoName,"crop");
+	@PostMapping("/temp/upload-complete")
+	public ResponseEntity uploadTempVideoComplete(@RequestBody UploadCompleteRequestDto uploadCompleteRequestDto,  @MemberId Integer memberId) throws Exception {
+		String url = videoEditingService.tempVideoProcess(uploadCompleteRequestDto.getVideoName(),"crop", memberId);
 
-		Map<String, String> response = new HashMap<>();
-		response.put("url", s3Util.fileUrl(url));
-		return new ResponseEntity(response, HttpStatus.CREATED);
+		UrlDto urlDto = new UrlDto(uploadCompleteRequestDto.getVideoUuid(), url);
+		return new ResponseEntity(urlDto, HttpStatus.OK);
 
 	}
 
