@@ -1,15 +1,11 @@
 package com.mzbr.videoeditingservice.util;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
 
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -29,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @Profile("ssafy")
 @Component
 @RequiredArgsConstructor
-public class DatabaseInitializer {
+public class SsafyProfileDatabaseInitializer {
 	private final VideoRepository videoRepository;
 	private final SubtitleRepository subtitleRepository;
 	private final ClipRepository clipRepository;
