@@ -36,13 +36,12 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper=false)
 @NamedEntityGraph(name = "VideoEntity.all"
 	, attributeNodes = {
-	@NamedAttributeNode(value = "clips", subgraph = "clips.subgraph"),
+	@NamedAttributeNode(value = "clips"),
 	@NamedAttributeNode(value = "userUploadAudioEntity"),
 	@NamedAttributeNode(value = "selectedServerAudioEntity", subgraph = "selectedServerAudioEntity.subgraph"),
 	@NamedAttributeNode(value = "subtitles"),
 },
 	subgraphs = {
-		@NamedSubgraph(name = "clips.subgraph", attributeNodes = @NamedAttributeNode("crop")),
 		@NamedSubgraph(name = "selectedServerAudioEntity.subgraph", attributeNodes = @NamedAttributeNode("serverAudioEntity"))
 	}
 )

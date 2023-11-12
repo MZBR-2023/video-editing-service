@@ -6,6 +6,7 @@ import java.util.Set;
 
 
 import com.github.kokorin.jaffree.ffmpeg.FFmpeg;
+import com.github.kokorin.jaffree.ffmpeg.FilterGraph;
 import com.github.kokorin.jaffree.ffmpeg.Input;
 import com.mzbr.videoeditingservice.dto.TempPreviewDto;
 import com.mzbr.videoeditingservice.dto.VideoEditingRequestDto;
@@ -19,13 +20,12 @@ public interface VideoEditingService {
 
 	void videoEditing(VideoEditingRequestDto videoEditingRequestDto, Integer memberId);
 
-	String processVideo(Long videoId, int width, int height, String folderPath) throws Exception;
+	void processVideo(Long videoId, int width, int height, String folderPath) throws Exception;
 	String tempVideoProcess(String videoName, String folderPath, Integer memberId) throws Exception;
 
 	String processTempPreview(TempPreviewDto tempPreviewDto, Integer memberId) throws Exception;
 	List<Input> prepareVideoInputs(Set<Clip> clips) throws Exception;
 
-	String generateVideoCropAndLayoutFilter(Set<Clip> clips, Integer scaleX, Integer scaleY) throws Exception;
 
 	String generateVideoVolumeFilter(Set<Clip> clips) throws Exception;
 
@@ -35,12 +35,14 @@ public interface VideoEditingService {
 
 	Input insertAudioToVideo(Audio audio) throws Exception;
 
-	String generateASSBySubtitles(Set<Subtitle> subtitles, String fileName) throws Exception;
+	Path generateASSBySubtitles(Set<Subtitle> subtitles, String fileName) throws Exception;
 
-	void executeSplitVideoIntoSegments(FFmpeg fFmpeg, int perSegmentSec, String filter, String outputPath) throws
+
+
+	void executeSplitVideoIntoSegments(FFmpeg fFmpeg, int perSegmentSec, FilterGraph filter, String outputPath) throws
 		Exception;
 
 	void uploadTempFileToS3(List<Path> pathList, String folderName) throws Exception;
 
-	void deleteTemporaryFile(List<Path> pathList, String assPath) throws Exception;
+	void deleteTemporaryFile(List<Path> pathList) throws Exception;
 }

@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
@@ -34,7 +32,7 @@ import software.amazon.awssdk.services.kinesis.model.ShardIteratorType;
 @RequiredArgsConstructor
 @Slf4j
 @Profile({"ssafy","prod"})
-public class EditingKinesisService {
+public class EditingConsumerKinesisService {
 	private final KinesisAsyncClient kinesisAsyncClient;
 	private final KinesisClient kinesisClient;
 	private final DynamoService dynamoService;
@@ -75,7 +73,7 @@ public class EditingKinesisService {
 		pollShard(shardIterator);
 	}
 
-	public PutRecordsResponse publishUuidListToKinesis(Long id) {
+	public PutRecordsResponse publishIdToKinesis(Long id) {
 		PutRecordsRequestEntry putRecordsRequestEntry= PutRecordsRequestEntry.builder()
 			.partitionKey("video")
 			.data(SdkBytes.fromUtf8String(String.valueOf(id)))

@@ -14,6 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Getter
 @Entity
@@ -29,8 +30,6 @@ public class Clip {
 	String name;
 	String url;
 
-	@OneToOne(mappedBy = "clip")
-	Crop crop;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "video_id")
