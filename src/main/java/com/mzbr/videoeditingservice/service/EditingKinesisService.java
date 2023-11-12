@@ -8,27 +8,35 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 import software.amazon.awssdk.services.dynamodb.model.UpdateItemResponse;
 import software.amazon.awssdk.services.kinesis.KinesisAsyncClient;
+import software.amazon.awssdk.services.kinesis.KinesisClient;
 import software.amazon.awssdk.services.kinesis.model.GetRecordsRequest;
 import software.amazon.awssdk.services.kinesis.model.GetRecordsResponse;
 import software.amazon.awssdk.services.kinesis.model.GetShardIteratorRequest;
 import software.amazon.awssdk.services.kinesis.model.ListShardsRequest;
+import software.amazon.awssdk.services.kinesis.model.PutRecordsRequest;
+import software.amazon.awssdk.services.kinesis.model.PutRecordsRequestEntry;
+import software.amazon.awssdk.services.kinesis.model.PutRecordsResponse;
 import software.amazon.awssdk.services.kinesis.model.ShardIteratorType;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Profile({"ssafy","prod"})
-public class KinesisConsumerService {
+public class EditingKinesisService {
 	private final KinesisAsyncClient kinesisAsyncClient;
+	private final KinesisClient kinesisClient;
 	private final DynamoService dynamoService;
 	private final VideoEditingServiceImpl videoEditingService;
 
@@ -65,6 +73,18 @@ public class KinesisConsumerService {
 			.join()
 			.shardIterator();
 		pollShard(shardIterator);
+	}
+
+	public PutRecordsResponse publishUuidListToKinesis(Long id) {
+		PutRecordsRequestEntry putRecordsRequestEntry= PutRecordsRequestEntry.builder()
+			.partitionKey("video")
+			.data(SdkBytes.fromUtf8String(String.valueOf(id)))
+			.build();
+		PutRecordsRequest putRecordsRequest = PutRecordsRequest.builder()
+			.streamName(STREAM_NAME)
+			.records(putRecordsRequestEntry)
+			.build();
+		return kinesisClient.putRecords(putRecordsRequest);
 	}
 
 	private void pollShard(String shardIterator) {

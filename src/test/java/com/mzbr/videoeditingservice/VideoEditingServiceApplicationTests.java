@@ -1,10 +1,8 @@
 package com.mzbr.videoeditingservice;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 import javax.transaction.Transactional;
 
@@ -14,7 +12,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.mzbr.videoeditingservice.model.Clip;
@@ -24,7 +21,7 @@ import com.mzbr.videoeditingservice.model.UserUploadAudioEntity;
 import com.mzbr.videoeditingservice.model.VideoEntity;
 import com.mzbr.videoeditingservice.repository.VideoRepository;
 import com.mzbr.videoeditingservice.repository.VideoSegmentRepository;
-import com.mzbr.videoeditingservice.service.KinesisConsumerService;
+import com.mzbr.videoeditingservice.service.EditingKinesisService;
 import com.mzbr.videoeditingservice.service.VideoEditingService;
 
 import lombok.RequiredArgsConstructor;
@@ -42,7 +39,7 @@ class VideoEditingServiceApplicationTests {
 	private LocalVideoEditingService localVideoEditingService;
 
 	@Autowired
-	KinesisConsumerService kinesisConsumerService;
+	EditingKinesisService kinesisConsumerService;
 
 	@Qualifier("videoEditingServiceImpl")
 	@Autowired

@@ -76,7 +76,8 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	private final VideoSegmentRepository videoSegmentRepository;
 	private final VideoRepository videoRepository;
 	private final DynamoService dynamoService;
-	private final KinesisProducerService kinesisProducerService;
+	private final EncodingKinesisService encodingKinesisService;
+	private final EditingKinesisService editingKinesisService;
 	private final TempVideoRepository tempVideoRepository;
 	private final TempPreviewRepository tempPreviewRepository;
 	private final MemberRepository memberRepository;
@@ -145,7 +146,8 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		//추후 태그 추가 되어야 함
 
 		//영상 편집 시작
-
+		dynamoService.createVideoEditingNewDocument(videoEntity.getId());
+		editingKinesisService.publishUuidListToKinesis(videoEntity.getId());
 	}
 
 	@Override
@@ -381,7 +383,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 		List<VideoEncodingDynamoTable> videoEncodingDynamoTableList = saveJopToDynamoDB(videoSegmentList);
 
-		kinesisProducerService.publishUuidListToKinesis(
+		encodingKinesisService.publishUuidListToKinesis(
 			videoEncodingDynamoTableList.stream()
 				.map(VideoEncodingDynamoTable::getId)
 				.collect(Collectors.toList()));
@@ -390,9 +392,9 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	private List<VideoEncodingDynamoTable> saveJopToDynamoDB(List<VideoSegment> videoSegmentList) {
 		List<VideoEncodingDynamoTable> videoEncodingDynamoTableList = new ArrayList<>();
-		for (VideoSegment videoSegment : videoSegmentList) {
 
-			for (EncodeFormat encodeFormat : EncodeFormat.values()) {
+		for (EncodeFormat encodeFormat : EncodeFormat.values()) {
+			for (VideoSegment videoSegment : videoSegmentList) {
 				videoEncodingDynamoTableList.add(VideoEncodingDynamoTable.builder()
 					.id(UUID.randomUUID().toString())
 					.rdbId(videoSegment.getId())
@@ -401,6 +403,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 					.build());
 			}
 		}
+
 		dynamoService.videoEncodingListBatchSave(videoEncodingDynamoTableList);
 		return videoEncodingDynamoTableList;
 	}

@@ -15,7 +15,7 @@ import software.amazon.awssdk.services.kinesis.model.PutRecordsResponse;
 
 @Service
 @RequiredArgsConstructor
-public class KinesisProducerService {
+public class EncodingKinesisService {
 	@Value("${cloud.aws.kinesis.producer-name}")
 	private String STREAM_NAME;
 
