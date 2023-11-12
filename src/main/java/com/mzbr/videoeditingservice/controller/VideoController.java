@@ -30,14 +30,14 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v/video")
 @RequiredArgsConstructor
 public class VideoController {
-	private final PreVideoService tempVideoUploadService;
+	private final PreVideoService preVideoService;
 	private final VideoEditingService videoEditingService;
 	private final S3Util s3Util;
 
 	@PostMapping("/temp/upload")
 	public ResponseEntity uploadTempVideo(@RequestBody UploadTempVideoDto uploadTempVideoDto,
 		@MemberId Integer memberId) {
-		String url = tempVideoUploadService.uploadTempVideo(uploadTempVideoDto, memberId);
+		String url = preVideoService.uploadTempVideo(uploadTempVideoDto, memberId);
 
 		UrlDto urlDto = new UrlDto(url);
 		return new ResponseEntity(urlDto, HttpStatus.CREATED);
@@ -48,7 +48,7 @@ public class VideoController {
 		@MemberId Integer memberId) throws Exception {
 		String url = videoEditingService.tempVideoProcess(uploadCompleteRequestDto.getVideoName(), "crop", memberId);
 
-		UrlDto urlDto = new UrlDto(url);
+		UrlDto urlDto = new UrlDto(s3Util.fileUrl(url));
 		return new ResponseEntity(urlDto, HttpStatus.OK);
 
 	}
@@ -73,10 +73,10 @@ public class VideoController {
 	}
 
 	//영상 제작 완료 전 오디오와 썸네일 전송
-	@GetMapping("/thumbnailAndAudioUploadUrl")
+	@GetMapping("/thumbnail-and-audio-upload-url")
 	public ResponseEntity getThumbnailAndAudioUploadUrl(
 		@RequestBody PreVideoEditingRequestDto preVideoEditingRequestDto) {
-		PreVideoEditingResponseDto preVideoEditingResponseDto = tempVideoUploadService.getThumbnailAndAudioUploadPresignUrl(
+		PreVideoEditingResponseDto preVideoEditingResponseDto = preVideoService.getThumbnailAndAudioUploadPresignUrl(
 			preVideoEditingRequestDto);
 		return new ResponseEntity(preVideoEditingResponseDto, HttpStatus.OK);
 	}

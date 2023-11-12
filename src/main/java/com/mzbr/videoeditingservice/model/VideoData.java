@@ -28,6 +28,7 @@ public class VideoData {
 
 	Integer star;
 	String description;
+	String thumbnailUrl;
 
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "video_id")

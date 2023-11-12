@@ -4,7 +4,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
-import org.springframework.transaction.annotation.Transactional;
 
 import com.github.kokorin.jaffree.ffmpeg.FFmpeg;
 import com.github.kokorin.jaffree.ffmpeg.Input;
@@ -18,7 +17,6 @@ public interface VideoEditingService {
 
 	void videoProcessStart(Integer memberId, String videoUuid);
 
-	@Transactional
 	void videoEditing(VideoEditingRequestDto videoEditingRequestDto, Integer memberId);
 
 	String processVideo(Long videoId, int width, int height, String folderPath) throws Exception;

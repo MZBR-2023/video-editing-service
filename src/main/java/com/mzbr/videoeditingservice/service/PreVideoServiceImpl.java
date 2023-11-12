@@ -63,9 +63,9 @@ public class PreVideoServiceImpl implements PreVideoService {
 	@Override
 	public PreVideoEditingResponseDto getThumbnailAndAudioUploadPresignUrl(PreVideoEditingRequestDto preVideoEditingRequestDto) {
 		PreVideoEditingResponseDto preVideoEditingResponseDto = new PreVideoEditingResponseDto();
-		preVideoEditingResponseDto.setAudioUrl(s3Util.generatePresignedUrl(preVideoEditingRequestDto.getAudioFileName()));
-		preVideoEditingResponseDto.setThumbnailUrl(s3Util.generatePresignedUrl(preVideoEditingRequestDto.getThumbnailFileName()));
-		return null;
+		preVideoEditingResponseDto.setAudioUrl(s3Util.generatePresignedUrl("audio/"+preVideoEditingRequestDto.getAudioFileName()));
+		preVideoEditingResponseDto.setThumbnailUrl(s3Util.generatePresignedUrl("thumbnail/"+preVideoEditingRequestDto.getThumbnailFileName()));
+		return preVideoEditingResponseDto;
 	}
 
 }
