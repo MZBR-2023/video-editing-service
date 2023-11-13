@@ -149,7 +149,6 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 			.videoEntity(videoEntity)
 			.build());
 
-		//추후 태그 추가 되어야 함
 		List<VideoHash> videoHashes = new ArrayList<>();
 		for (String tag : videoEditingRequestDto.getTags()) {
 			HashTag hashTag = hashTagRepository.findByName(tag).orElse(
@@ -200,7 +199,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		executeSplitVideoIntoSegments(fFmpeg, 5, filter, outputPath);
 
 		//비디오 경로리스트 생성
-		List<Path> pathList = getSegementPathList(videoEntity.getVideoUuid());
+		List<Path> pathList = getSegementPathList();
 
 		//생성 비디오 s3에 업로드
 		uploadTempFileToS3(pathList, folderPath + "/" + videoEntity.getVideoUuid());
@@ -507,39 +506,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		return filterGraph;
 	}
 
-	private List<Input> inputContents(Video videoEntity) throws Exception {
-		List<Input> inputs = prepareVideoInputs(videoEntity.getClips());
 
-		if (videoEntity.hasAudio()) {
-			inputs.add(insertAudioToVideo(videoEntity.getAudio()));
-		}
-		return inputs;
-
-	}
-
-	@Override
-	public List<Input> prepareVideoInputs(Set<Clip> clips) throws Exception {
-		List<Input> inputs = new ArrayList<>();
-		Map<Long, String> presignMap = s3Util.getClipsPresignedUrlMap(clips);
-
-		List<Clip> sortedClipList = clips.stream().sorted(Comparator.comparing(Clip::getId)).collect(
-			Collectors.toList());
-
-		for (Clip clip : sortedClipList) {
-			inputs.add(UrlInput.fromUrl("\"" + presignMap.get(clip.getId()) + "\""));
-		}
-		return inputs;
-	}
-
-
-	@Override
-	public Input insertAudioToVideo(Audio audio) throws Exception {
-		return UrlInput.fromUrl("\"" +
-			s3Util.getPresigndUrl(
-				audio.getUrl()
-			)
-			+ "\"");
-	}
 
 	@Override
 	public Path generateASSBySubtitles(Set<Subtitle> subtitles, String fileName) throws Exception {
@@ -555,13 +522,8 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		return tempFile.getAbsoluteFile().toPath();
 	}
 
-	protected String modifyWindowPathForFfmpeg(String originalPath) {
-		String newPath = originalPath.replace("\\", "/");
-		newPath = newPath.replace(":", "\\\\:");
-		return newPath;
-	}
 
-	protected List<Path> getSegementPathList(String uuid) {
+	protected List<Path> getSegementPathList() {
 		List<Path> result = new ArrayList<>();
 
 		int index = 0;

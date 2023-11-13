@@ -92,6 +92,6 @@ public class Video {
 	}
 
 	public void storeRegister(Store store) {
-
+		this.store=store;
 	}
 }

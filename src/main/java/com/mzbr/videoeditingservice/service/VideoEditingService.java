@@ -24,10 +24,6 @@ public interface VideoEditingService {
 	String tempVideoProcess(String videoName, String folderPath, Integer memberId) throws Exception;
 
 	String processTempPreview(TempPreviewDto tempPreviewDto, Integer memberId) throws Exception;
-	List<Input> prepareVideoInputs(Set<Clip> clips) throws Exception;
-
-
-	Input insertAudioToVideo(Audio audio) throws Exception;
 
 	Path generateASSBySubtitles(Set<Subtitle> subtitles, String fileName) throws Exception;
 
