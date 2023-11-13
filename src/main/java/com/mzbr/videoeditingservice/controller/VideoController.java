@@ -73,7 +73,7 @@ public class VideoController {
 	}
 
 	//영상 제작 완료 전 오디오와 썸네일 전송
-	@GetMapping("/thumbnail-and-audio-upload-url")
+	@PostMapping("/thumbnail-and-audio-upload-url")
 	public ResponseEntity getThumbnailAndAudioUploadUrl(
 		@RequestBody PreVideoEditingRequestDto preVideoEditingRequestDto) {
 		PreVideoEditingResponseDto preVideoEditingResponseDto = preVideoService.getThumbnailAndAudioUploadPresignUrl(
