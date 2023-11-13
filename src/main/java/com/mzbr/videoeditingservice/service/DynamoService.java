@@ -6,7 +6,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.mzbr.videoeditingservice.model.VideoEncodingDynamoTable;
+import com.mzbr.videoeditingservice.model.document.VideoEditingDynamoTable;
+import com.mzbr.videoeditingservice.model.document.VideoEncodingDynamoTable;
 
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
@@ -28,8 +29,14 @@ public class DynamoService {
 
 	@Value("${cloud.dynamo.encoding-table}")
 	private String ENCODING_TABLE_NAME;
-	private final TableSchema<VideoEncodingDynamoTable> tableSchema = TableSchema.fromBean(
+
+	@Value("${cloud.dynamo.editing-table}")
+	private String EDITING_TABLE_NAME;
+	private final TableSchema<VideoEncodingDynamoTable> videoEncodingtableSchema = TableSchema.fromBean(
 		VideoEncodingDynamoTable.class);
+
+	private final TableSchema<VideoEditingDynamoTable> videoEditingDynamoTableTableSchema = TableSchema.fromBean(
+		VideoEditingDynamoTable.class);
 
 	public GetItemResponse getItemResponse(String tableName, String idName, Long id) {
 		return dynamoDbClient.getItem(GetItemRequest.builder()
@@ -52,7 +59,8 @@ public class DynamoService {
 
 	public void videoEncodingListBatchSave(List<VideoEncodingDynamoTable> videoEncodingDynamoTableList) {
 
-		DynamoDbTable<VideoEncodingDynamoTable> table = dynamoDbEnhancedClient.table(ENCODING_TABLE_NAME, tableSchema);
+		DynamoDbTable<VideoEncodingDynamoTable> table = dynamoDbEnhancedClient.table(ENCODING_TABLE_NAME,
+			videoEncodingtableSchema);
 		TransactWriteItemsEnhancedRequest.Builder transactWriteItemsEnhancedRequest = TransactWriteItemsEnhancedRequest.builder();
 
 		for (VideoEncodingDynamoTable videoEncodingDynamoTable : videoEncodingDynamoTableList) {
@@ -60,5 +68,19 @@ public class DynamoService {
 		}
 
 		dynamoDbEnhancedClient.transactWriteItems(transactWriteItemsEnhancedRequest.build());
+	}
+
+	public void createVideoEditingNewDocument(Long id) {
+		VideoEditingDynamoTable videoEditingDynamoTable = VideoEditingDynamoTable.builder()
+			.id(id)
+			.status("waiting")
+			.failureCount(0)
+			.build();
+		DynamoDbTable<VideoEditingDynamoTable> table = dynamoDbEnhancedClient.table(EDITING_TABLE_NAME,
+			videoEditingDynamoTableTableSchema);
+
+		dynamoDbEnhancedClient.transactWriteItems(TransactWriteItemsEnhancedRequest.builder()
+			.addPutItem(table, videoEditingDynamoTable)
+			.build());
 	}
 }

@@ -1,6 +1,7 @@
-package com.mzbr.videoeditingservice.model;
+package com.mzbr.videoeditingservice.model.entity;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -18,17 +19,19 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "crop")
-public class Crop {
+@Table(name = "video_data")
+public class VideoData {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	Long id;
-	Integer startX;
-	Integer startY;
-	Float zoomFactor;
 
-	@OneToOne
-	@JoinColumn(name = "clip_id")
-	Clip clip;
+	Integer star;
+	String description;
+	String thumbnailUrl;
+	String m3u8Url;
+
+	@OneToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "video_id")
+	Video videoEntity;
 
 }

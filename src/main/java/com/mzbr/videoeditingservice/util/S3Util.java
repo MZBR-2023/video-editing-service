@@ -16,7 +16,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.mzbr.videoeditingservice.model.Clip;
+import com.mzbr.videoeditingservice.model.entity.Clip;
 
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.core.ResponseBytes;
@@ -102,12 +102,17 @@ public class S3Util {
 		GetObjectRequest getObjectRequest = GetObjectRequest.builder()
 			.bucket(BUCKET_NAME)
 			.key(fileName)
-			.build()
-			;
+			.build();
 		ResponseBytes<GetObjectResponse> objectBytes = s3Client.getObjectAsBytes(getObjectRequest);
 		byte[] data = objectBytes.asByteArray();
 
-		File myFile = new File(UUID.randomUUID().toString()+".mp4");
+		String extension = "";
+		int i = fileName.lastIndexOf('.');
+		if (i > 0) {
+			extension = fileName.substring(i);
+		}
+
+		File myFile = new File(UUID.randomUUID()+ extension);
 		OutputStream os = new FileOutputStream(myFile);
 		os.write(data);
 		os.close();

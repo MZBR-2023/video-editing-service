@@ -1,12 +1,12 @@
-package com.mzbr.videoeditingservice.model;
+package com.mzbr.videoeditingservice.model.entity;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
@@ -19,22 +19,25 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "selected_server_audio")
-public class SelectedServerAudioEntity extends Audio {
+@Table(name = "subtitle")
+public class Subtitle {
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	Long id;
 
-	@OneToOne
+	String text;
+	Integer startTime;
+	Integer endTime;
+
+	Integer positionX;
+	Integer positionY;
+	Float scale;
+	Float rotation;
+	Integer color;
+	Integer zIndex;
+
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "video_id")
-	VideoEntity videoEntity;
-
-	@ManyToOne
-	@JoinColumn(name = "server_audio_id")
-	ServerAudioEntity serverAudioEntity;
-
-	@Override
-	public String getUrl() {
-		return serverAudioEntity.getUrl();
-	}
+	Video videoEntity;
 }

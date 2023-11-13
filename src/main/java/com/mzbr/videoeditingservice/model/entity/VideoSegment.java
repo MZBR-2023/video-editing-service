@@ -1,34 +1,35 @@
-package com.mzbr.videoeditingservice.model;
-
-import java.util.List;
+package com.mzbr.videoeditingservice.model.entity;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
+import lombok.ToString;
 
 @Getter
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@SuperBuilder
-@Table(name = "server_audio")
-public class ServerAudioEntity {
+@Builder
+@Table(name = "videoSegment")
+@ToString
+public class VideoSegment {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	Long id;
+	String videoUrl;
+	String videoName;
+	Integer videoSequence;
 
-	String url;
-
-	@OneToMany(mappedBy = "serverAudioEntity")
-	List<SelectedServerAudioEntity> selectedServerAudioEntities;
+	@ManyToOne
+	@JoinColumn(name = "video_id")
+	Video videoEntity;
 }

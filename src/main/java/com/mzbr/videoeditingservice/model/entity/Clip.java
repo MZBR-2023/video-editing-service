@@ -1,36 +1,38 @@
-package com.mzbr.videoeditingservice.model;
+package com.mzbr.videoeditingservice.model.entity;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.experimental.SuperBuilder;
 
 @Getter
 @Entity
-@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "user_upload_audio")
-public class UserUploadAudioEntity extends Audio {
+@Builder
+@Table(name = "clip")
+public class Clip {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	Long id;
 
+	String name;
 	String url;
 
-	@OneToOne
+
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "video_id")
-	VideoEntity videoEntity;
+	Video videoEntity;
+
+	Float volume;
+	String extension;
 }

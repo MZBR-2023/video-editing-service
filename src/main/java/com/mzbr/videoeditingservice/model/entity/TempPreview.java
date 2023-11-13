@@ -1,7 +1,10 @@
-package com.mzbr.videoeditingservice.model;
+package com.mzbr.videoeditingservice.model.entity;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
@@ -22,5 +25,9 @@ public class TempPreview {
 	String id;
 
 	String s3Url;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "memberId")
+	Member member;
 
 }

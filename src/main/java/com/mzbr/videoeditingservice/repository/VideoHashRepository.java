@@ -3,8 +3,8 @@ package com.mzbr.videoeditingservice.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.mzbr.videoeditingservice.model.entity.Clip;
+import com.mzbr.videoeditingservice.model.entity.VideoHash;
 
 @Repository
-public interface ClipRepository extends JpaRepository<Clip,Long> {
+public interface VideoHashRepository extends JpaRepository<VideoHash,Long> {
 }

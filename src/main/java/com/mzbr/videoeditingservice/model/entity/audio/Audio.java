@@ -1,4 +1,4 @@
-package com.mzbr.videoeditingservice.model;
+package com.mzbr.videoeditingservice.model.entity.audio;
 
 import javax.persistence.MappedSuperclass;
 import lombok.Getter;

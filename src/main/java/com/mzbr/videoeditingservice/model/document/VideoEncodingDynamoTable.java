@@ -1,4 +1,4 @@
-package com.mzbr.videoeditingservice.model;
+package com.mzbr.videoeditingservice.model.document;
 
 import org.springframework.beans.factory.annotation.Autowired;
 

@@ -1,10 +1,12 @@
-package com.mzbr.videoeditingservice.model;
+package com.mzbr.videoeditingservice.model.entity;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
@@ -31,6 +33,10 @@ public class TempVideo {
 
 	@OneToOne(mappedBy = "tempVideo",fetch = FetchType.LAZY)
 	TempCrop tempCrop;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "video_id")
+	Video videoEntity;
 
 	public void updateAfterCropUrl(String afterCropUrl) {
 		this.afterCropUrl=afterCropUrl;

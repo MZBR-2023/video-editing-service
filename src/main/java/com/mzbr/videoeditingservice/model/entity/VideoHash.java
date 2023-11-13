@@ -1,4 +1,4 @@
-package com.mzbr.videoeditingservice.model;
+package com.mzbr.videoeditingservice.model.entity;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -12,24 +12,23 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 @Getter
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "videoSegment")
-@ToString
-public class VideoSegment {
+@Table(name = "video_hash")
+public class VideoHash {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	Long id;
-	String videoUrl;
-	String videoName;
-	Integer videoSequence;
 
 	@ManyToOne
 	@JoinColumn(name = "video_id")
-	VideoEntity videoEntity;
+	Video videoEntity;
+
+	@ManyToOne
+	@JoinColumn(name = "hashtag_id")
+	HashTag hashTag;
 }
