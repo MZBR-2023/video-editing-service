@@ -27,7 +27,7 @@ import com.mzbr.videoeditingservice.util.S3Util;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v/video")
+@RequestMapping("/v/video")
 @RequiredArgsConstructor
 public class VideoController {
 	private final PreVideoService preVideoService;
