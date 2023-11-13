@@ -1,4 +1,4 @@
-package com.mzbr.videoeditingservice.model;
+package com.mzbr.videoeditingservice.model.entity;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -14,24 +14,35 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Getter
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "video_data")
-public class VideoData {
+@Table(name = "temp_video")
+@ToString
+public class TempVideo {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	Long id;
+	private Long id;
+	private String videoName;
+	private String originVideoUrl;
+	private String afterCropUrl;
 
-	Integer star;
-	String description;
-	String thumbnailUrl;
+	@OneToOne(mappedBy = "tempVideo",fetch = FetchType.LAZY)
+	TempCrop tempCrop;
 
-	@OneToOne(fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "video_id")
-	VideoEntity videoEntity;
+	Video videoEntity;
 
+	public void updateAfterCropUrl(String afterCropUrl) {
+		this.afterCropUrl=afterCropUrl;
+	}
+
+	public void updateOriginCropUrl(String originVideoUrl) {
+		this.originVideoUrl=originVideoUrl;
+	}
 }

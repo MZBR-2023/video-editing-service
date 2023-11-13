@@ -1,4 +1,4 @@
-package com.mzbr.videoeditingservice.model;
+package com.mzbr.videoeditingservice.model.entity;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;

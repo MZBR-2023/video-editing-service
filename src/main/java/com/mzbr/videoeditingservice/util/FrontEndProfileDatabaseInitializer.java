@@ -6,12 +6,10 @@ import javax.transaction.Transactional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import com.mzbr.videoeditingservice.model.Member;
-import com.mzbr.videoeditingservice.model.Store;
-import com.mzbr.videoeditingservice.model.VideoEntity;
+import com.mzbr.videoeditingservice.model.entity.Member;
+import com.mzbr.videoeditingservice.model.entity.Store;
 import com.mzbr.videoeditingservice.repository.MemberRepository;
 import com.mzbr.videoeditingservice.repository.StoreRepository;
-import com.mzbr.videoeditingservice.repository.VideoRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 public class FrontEndProfileDatabaseInitializer {
 
 	private final MemberRepository memberRepository;
-	private final VideoRepository videoRepository;
 	private final StoreRepository storeRepository;
 	@PostConstruct
 	@Transactional

@@ -10,9 +10,9 @@ import com.github.kokorin.jaffree.ffmpeg.FilterGraph;
 import com.github.kokorin.jaffree.ffmpeg.Input;
 import com.mzbr.videoeditingservice.dto.TempPreviewDto;
 import com.mzbr.videoeditingservice.dto.VideoEditingRequestDto;
-import com.mzbr.videoeditingservice.model.Audio;
-import com.mzbr.videoeditingservice.model.Clip;
-import com.mzbr.videoeditingservice.model.Subtitle;
+import com.mzbr.videoeditingservice.model.entity.audio.Audio;
+import com.mzbr.videoeditingservice.model.entity.Clip;
+import com.mzbr.videoeditingservice.model.entity.Subtitle;
 
 public interface VideoEditingService {
 
@@ -26,12 +26,6 @@ public interface VideoEditingService {
 	String processTempPreview(TempPreviewDto tempPreviewDto, Integer memberId) throws Exception;
 	List<Input> prepareVideoInputs(Set<Clip> clips) throws Exception;
 
-
-	String generateVideoVolumeFilter(Set<Clip> clips) throws Exception;
-
-	String generateAudioFilter(Audio audio, int totalDurationTime, int clipCount) throws Exception;
-
-	String generateConcatVideoFilter(Integer clipCount, boolean hasAudio) throws Exception;
 
 	Input insertAudioToVideo(Audio audio) throws Exception;
 

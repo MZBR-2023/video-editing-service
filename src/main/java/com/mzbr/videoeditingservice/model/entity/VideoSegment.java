@@ -1,7 +1,8 @@
-package com.mzbr.videoeditingservice.model;
+package com.mzbr.videoeditingservice.model.entity;
 
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -18,16 +19,17 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "temp_preview")
+@Table(name = "videoSegment")
 @ToString
-public class TempPreview {
+public class VideoSegment {
 	@Id
-	String id;
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	Long id;
+	String videoUrl;
+	String videoName;
+	Integer videoSequence;
 
-	String s3Url;
-
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "memberId")
-	Member member;
-
+	@ManyToOne
+	@JoinColumn(name = "video_id")
+	Video videoEntity;
 }

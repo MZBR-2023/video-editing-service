@@ -1,11 +1,11 @@
-package com.mzbr.videoeditingservice.model;
+package com.mzbr.videoeditingservice.model.entity;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
@@ -18,17 +18,19 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "video_hash")
-public class VideoHash {
+@Table(name = "temp_crop")
+public class TempCrop {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	Long id;
 
-	@ManyToOne
-	@JoinColumn(name = "video_id")
-	VideoEntity videoEntity;
+	Integer x;
+	Integer y;
+	Integer width;
+	Integer height;
 
-	@ManyToOne
-	@JoinColumn(name = "hashtag_id")
-	HashTag hashTag;
+	@OneToOne
+	@JoinColumn(name = "temp_video_id")
+	TempVideo tempVideo;
+
 }

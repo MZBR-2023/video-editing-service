@@ -6,8 +6,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.mzbr.videoeditingservice.model.VideoEditingDynamoTable;
-import com.mzbr.videoeditingservice.model.VideoEncodingDynamoTable;
+import com.mzbr.videoeditingservice.model.document.VideoEditingDynamoTable;
+import com.mzbr.videoeditingservice.model.document.VideoEncodingDynamoTable;
 
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;

@@ -1,4 +1,4 @@
-package com.mzbr.videoeditingservice.model;
+package com.mzbr.videoeditingservice.model.entity.audio;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -8,29 +8,27 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import com.mzbr.videoeditingservice.model.entity.Video;
+
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Getter
 @Entity
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@Table(name = "temp_crop")
-public class TempCrop {
+@Table(name = "user_upload_audio")
+public class UserUploadAudio extends Audio {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	Long id;
 
-	Integer x;
-	Integer y;
-	Integer width;
-	Integer height;
+	String url;
 
 	@OneToOne
-	@JoinColumn(name = "temp_video_id")
-	TempVideo tempVideo;
-
+	@JoinColumn(name = "video_id")
+	Video videoEntity;
 }

@@ -1,4 +1,4 @@
-package com.mzbr.videoeditingservice.model;
+package com.mzbr.videoeditingservice.model.entity;
 
 import java.util.Set;
 
@@ -16,11 +16,12 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
-import com.mzbr.videoeditingservice.repository.StoreRepository;
+import com.mzbr.videoeditingservice.model.entity.audio.Audio;
+import com.mzbr.videoeditingservice.model.entity.audio.SelectedServerAudio;
+import com.mzbr.videoeditingservice.model.entity.audio.UserUploadAudio;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -45,7 +46,7 @@ import lombok.ToString;
 		@NamedSubgraph(name = "selectedServerAudioEntity.subgraph", attributeNodes = @NamedAttributeNode("serverAudioEntity"))
 	}
 )
-public class VideoEntity {
+public class Video {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -64,10 +65,10 @@ public class VideoEntity {
 	VideoData videoData;
 
 	@OneToOne(mappedBy = "videoEntity")
-	UserUploadAudioEntity userUploadAudioEntity;
+	UserUploadAudio userUploadAudioEntity;
 
 	@OneToOne(mappedBy = "videoEntity")
-	SelectedServerAudioEntity selectedServerAudioEntity;
+	SelectedServerAudio selectedServerAudioEntity;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "memberId")
@@ -88,11 +89,6 @@ public class VideoEntity {
 			return userUploadAudioEntity;
 		}
 		return selectedServerAudioEntity;
-	}
-
-	public Integer getTotalDuration() {
-		return clips.stream().mapToInt(Clip::getDurationTime)
-			.sum();
 	}
 
 	public void storeRegister(Store store) {

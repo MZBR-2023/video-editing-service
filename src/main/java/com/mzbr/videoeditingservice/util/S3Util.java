@@ -16,7 +16,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.mzbr.videoeditingservice.model.Clip;
+import com.mzbr.videoeditingservice.model.entity.Clip;
 
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.core.ResponseBytes;

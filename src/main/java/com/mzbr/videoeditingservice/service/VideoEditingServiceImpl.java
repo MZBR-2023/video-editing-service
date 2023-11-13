@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -30,20 +29,20 @@ import com.mzbr.videoeditingservice.dto.TempPreviewDto;
 import com.mzbr.videoeditingservice.dto.VideoEditingRequestDto;
 import com.mzbr.videoeditingservice.enums.EncodeFormat;
 import com.mzbr.videoeditingservice.exception.MemberException;
-import com.mzbr.videoeditingservice.model.Audio;
-import com.mzbr.videoeditingservice.model.Clip;
-import com.mzbr.videoeditingservice.model.HashTag;
-import com.mzbr.videoeditingservice.model.Member;
-import com.mzbr.videoeditingservice.model.Store;
-import com.mzbr.videoeditingservice.model.Subtitle;
-import com.mzbr.videoeditingservice.model.TempPreview;
-import com.mzbr.videoeditingservice.model.TempVideo;
-import com.mzbr.videoeditingservice.model.UserUploadAudioEntity;
-import com.mzbr.videoeditingservice.model.VideoData;
-import com.mzbr.videoeditingservice.model.VideoEncodingDynamoTable;
-import com.mzbr.videoeditingservice.model.VideoEntity;
-import com.mzbr.videoeditingservice.model.VideoHash;
-import com.mzbr.videoeditingservice.model.VideoSegment;
+import com.mzbr.videoeditingservice.model.entity.audio.Audio;
+import com.mzbr.videoeditingservice.model.entity.Clip;
+import com.mzbr.videoeditingservice.model.entity.HashTag;
+import com.mzbr.videoeditingservice.model.entity.Member;
+import com.mzbr.videoeditingservice.model.entity.Store;
+import com.mzbr.videoeditingservice.model.entity.Subtitle;
+import com.mzbr.videoeditingservice.model.entity.TempPreview;
+import com.mzbr.videoeditingservice.model.entity.TempVideo;
+import com.mzbr.videoeditingservice.model.entity.audio.UserUploadAudio;
+import com.mzbr.videoeditingservice.model.entity.VideoData;
+import com.mzbr.videoeditingservice.model.document.VideoEncodingDynamoTable;
+import com.mzbr.videoeditingservice.model.entity.Video;
+import com.mzbr.videoeditingservice.model.entity.VideoHash;
+import com.mzbr.videoeditingservice.model.entity.VideoSegment;
 import com.mzbr.videoeditingservice.repository.ClipRepository;
 import com.mzbr.videoeditingservice.repository.HashTagRepository;
 import com.mzbr.videoeditingservice.repository.MemberRepository;
@@ -96,7 +95,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	@Override
 	public void videoProcessStart(Integer memberId, String videoUuid) {
 		Member member = memberRepository.findById(memberId).orElseThrow();
-		VideoEntity videoEntity = VideoEntity.builder()
+		Video videoEntity = Video.builder()
 			.videoUuid(videoUuid)
 			.member(member)
 			.build();
@@ -106,7 +105,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	@Transactional
 	@Override
 	public void videoEditing(VideoEditingRequestDto videoEditingRequestDto, Integer memberId) {
-		VideoEntity videoEntity = videoRepository.findByVideoUuid(videoEditingRequestDto.getVideoUuid()).orElseThrow();
+		Video videoEntity = videoRepository.findByVideoUuid(videoEditingRequestDto.getVideoUuid()).orElseThrow();
 		Store store = storeRepository.findById(videoEditingRequestDto.getStoreId()).orElseThrow();
 		if (videoEntity.getMember().getId() != memberId) {
 			throw new MemberException("사용자의 엔티티가 아닙니다.");
@@ -138,7 +137,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		}
 		subtitleRepository.saveAll(subtitles);
 
-		userUploadAudioRepository.save(UserUploadAudioEntity.builder()
+		userUploadAudioRepository.save(UserUploadAudio.builder()
 			.url("audio/" + videoEditingRequestDto.getAudio().getFileName())
 			.volume(videoEditingRequestDto.getAudio().getVolume())
 			.videoEntity(videoEntity)
@@ -172,7 +171,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	@Override
 	public void processVideo(Long videoId, int width, int height, String folderPath) throws Exception {
-		VideoEntity videoEntity = videoRepository.findById(videoId).orElseThrow();
+		Video videoEntity = videoRepository.findById(videoId).orElseThrow();
 
 		//출력 이름 지정
 		String outputPath = "%03d.mov";
@@ -359,7 +358,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		return url;
 	}
 
-	private void createAndUploadM3U8(VideoEntity videoEntity, int size) {
+	private void createAndUploadM3U8(Video videoEntity, int size) {
 
 		String[] versions = {"P144", "P360", "P480", "P720"};
 		List<Path> pathList = new ArrayList<>();
@@ -398,7 +397,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	}
 
-	private void persistAndSendVideoSegment(String folderPath, VideoEntity videoEntity, List<Path> pathList) {
+	private void persistAndSendVideoSegment(String folderPath, Video videoEntity, List<Path> pathList) {
 		List<VideoSegment> videoSegmentList = new ArrayList<>();
 		for (int i = 0; i < pathList.size(); i++) {
 			videoSegmentList.add(VideoSegment.builder()
@@ -438,7 +437,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		return videoEncodingDynamoTableList;
 	}
 
-	private FilterGraph generateFilter(VideoEntity videoEntity, int width, int height, Path assPath) throws
+	private FilterGraph generateFilter(Video videoEntity, int width, int height, Path assPath) throws
 		Exception {
 		FilterGraph filterGraph = new FilterGraph();
 
@@ -508,7 +507,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		return filterGraph;
 	}
 
-	private List<Input> inputContents(VideoEntity videoEntity) throws Exception {
+	private List<Input> inputContents(Video videoEntity) throws Exception {
 		List<Input> inputs = prepareVideoInputs(videoEntity.getClips());
 
 		if (videoEntity.hasAudio()) {
@@ -532,42 +531,6 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		return inputs;
 	}
 
-	@Override
-	public String generateVideoVolumeFilter(Set<Clip> clips) throws Exception {
-		StringJoiner filterJoiner = new StringJoiner(";");
-		int i = 0;
-		for (Clip clip : clips) {
-			if (clip.getVolume() != null) {
-				filterJoiner.add(String.format("[%d:a]volume=%.2f[a%d]", i, clip.getVolume(), i));
-			}
-			i++;
-		}
-
-		return filterJoiner.toString();
-	}
-
-	@Override
-	public String generateAudioFilter(Audio audio, int totalDurationTime, int clipCount) throws Exception {
-		return String.format("[%d:a]volume=%.2f,atrim=start=%f:duration=%f[a_special]", clipCount, audio.getVolume(),
-			(float)audio.getStartTime() / 1000, (float)totalDurationTime / 1000);
-	}
-
-	@Override
-	public String generateConcatVideoFilter(Integer clipCount, boolean hasAudio) {
-		StringBuilder filterBuilder = new StringBuilder();
-		for (int i = 0; i < clipCount; i++) {
-			filterBuilder.append(String.format("[v%d][a%d]", i, i));
-		}
-
-		if (hasAudio) {
-			filterBuilder.append(String.format("concat=n=%d:v=1:a=1[v_concat][a_concat];", clipCount));
-			filterBuilder.append("[a_concat][a_special]amix=inputs=2:duration=first[outa]");
-			return filterBuilder.toString();
-		}
-		filterBuilder.append(String.format("concat=n=%d:v=1:a=1[v_concat][outa]", clipCount));
-
-		return filterBuilder.toString();
-	}
 
 	@Override
 	public Input insertAudioToVideo(Audio audio) throws Exception {

@@ -9,10 +9,10 @@ import javax.transaction.Transactional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import com.mzbr.videoeditingservice.model.Clip;
-import com.mzbr.videoeditingservice.model.Subtitle;
-import com.mzbr.videoeditingservice.model.UserUploadAudioEntity;
-import com.mzbr.videoeditingservice.model.VideoEntity;
+import com.mzbr.videoeditingservice.model.entity.Clip;
+import com.mzbr.videoeditingservice.model.entity.Subtitle;
+import com.mzbr.videoeditingservice.model.entity.audio.UserUploadAudio;
+import com.mzbr.videoeditingservice.model.entity.Video;
 import com.mzbr.videoeditingservice.repository.ClipRepository;
 import com.mzbr.videoeditingservice.repository.SubtitleRepository;
 import com.mzbr.videoeditingservice.repository.UserUploadAudioRepository;
@@ -31,7 +31,7 @@ public class SsafyProfileDatabaseInitializer {
 	@PostConstruct
 	@Transactional
 	public void init() {
-		VideoEntity videoEntity = VideoEntity.builder()
+		Video videoEntity = Video.builder()
 			.videoUuid(UUID.randomUUID().toString())
 			.build();
 		videoRepository.save(videoEntity);
@@ -76,7 +76,7 @@ public class SsafyProfileDatabaseInitializer {
 
 		clipRepository.saveAll(List.of(clip1, clip2));
 
-		UserUploadAudioEntity userUploadAudioEntity = UserUploadAudioEntity.builder()
+		UserUploadAudio userUploadAudioEntity = UserUploadAudio.builder()
 			.videoEntity(videoEntity)
 			.url("audio/1.mp3")
 			.startTime(10000)

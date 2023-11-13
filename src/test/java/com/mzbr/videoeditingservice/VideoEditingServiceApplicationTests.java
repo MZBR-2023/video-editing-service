@@ -1,7 +1,5 @@
 package com.mzbr.videoeditingservice;
 
-import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import javax.transaction.Transactional;
@@ -14,18 +12,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.ActiveProfiles;
 
-import com.mzbr.videoeditingservice.model.Clip;
-import com.mzbr.videoeditingservice.model.Subtitle;
-import com.mzbr.videoeditingservice.model.UserUploadAudioEntity;
-import com.mzbr.videoeditingservice.model.VideoEntity;
 import com.mzbr.videoeditingservice.repository.ClipRepository;
 import com.mzbr.videoeditingservice.repository.SubtitleRepository;
 import com.mzbr.videoeditingservice.repository.UserUploadAudioRepository;
 import com.mzbr.videoeditingservice.repository.VideoRepository;
 import com.mzbr.videoeditingservice.service.EditingConsumerKinesisService;
 import com.mzbr.videoeditingservice.service.VideoEditingService;
-
-import lombok.RequiredArgsConstructor;
 
 @SpringBootTest
 @ActiveProfiles("ssafy")

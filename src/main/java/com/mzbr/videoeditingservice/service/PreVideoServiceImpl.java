@@ -9,9 +9,9 @@ import com.mzbr.videoeditingservice.dto.PreVideoEditingRequestDto;
 import com.mzbr.videoeditingservice.dto.PreVideoEditingResponseDto;
 import com.mzbr.videoeditingservice.dto.UploadTempVideoDto;
 import com.mzbr.videoeditingservice.exception.MemberException;
-import com.mzbr.videoeditingservice.model.TempCrop;
-import com.mzbr.videoeditingservice.model.TempVideo;
-import com.mzbr.videoeditingservice.model.VideoEntity;
+import com.mzbr.videoeditingservice.model.entity.TempCrop;
+import com.mzbr.videoeditingservice.model.entity.TempVideo;
+import com.mzbr.videoeditingservice.model.entity.Video;
 import com.mzbr.videoeditingservice.repository.TempCropRepository;
 import com.mzbr.videoeditingservice.repository.TempVideoRepository;
 import com.mzbr.videoeditingservice.repository.VideoRepository;
@@ -30,7 +30,7 @@ public class PreVideoServiceImpl implements PreVideoService {
 	@Override
 	@Transactional
 	public String uploadTempVideo(UploadTempVideoDto uploadTempVideoDto, Integer memberId) {
-		VideoEntity videoEntity = videoRepository.findByVideoUuid(uploadTempVideoDto.getVideoUuid()).orElseThrow();
+		Video videoEntity = videoRepository.findByVideoUuid(uploadTempVideoDto.getVideoUuid()).orElseThrow();
 		if (videoEntity.getMember().getId() != memberId) {
 			throw new MemberException("사용자의 엔티티가 아닙니다.");
 		}
