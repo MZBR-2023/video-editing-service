@@ -32,6 +32,7 @@ import com.mzbr.videoeditingservice.enums.EncodeFormat;
 import com.mzbr.videoeditingservice.exception.MemberException;
 import com.mzbr.videoeditingservice.model.Audio;
 import com.mzbr.videoeditingservice.model.Clip;
+import com.mzbr.videoeditingservice.model.HashTag;
 import com.mzbr.videoeditingservice.model.Member;
 import com.mzbr.videoeditingservice.model.Store;
 import com.mzbr.videoeditingservice.model.Subtitle;
@@ -41,8 +42,10 @@ import com.mzbr.videoeditingservice.model.UserUploadAudioEntity;
 import com.mzbr.videoeditingservice.model.VideoData;
 import com.mzbr.videoeditingservice.model.VideoEncodingDynamoTable;
 import com.mzbr.videoeditingservice.model.VideoEntity;
+import com.mzbr.videoeditingservice.model.VideoHash;
 import com.mzbr.videoeditingservice.model.VideoSegment;
 import com.mzbr.videoeditingservice.repository.ClipRepository;
+import com.mzbr.videoeditingservice.repository.HashTagRepository;
 import com.mzbr.videoeditingservice.repository.MemberRepository;
 import com.mzbr.videoeditingservice.repository.StoreRepository;
 import com.mzbr.videoeditingservice.repository.SubtitleRepository;
@@ -50,6 +53,7 @@ import com.mzbr.videoeditingservice.repository.TempPreviewRepository;
 import com.mzbr.videoeditingservice.repository.TempVideoRepository;
 import com.mzbr.videoeditingservice.repository.UserUploadAudioRepository;
 import com.mzbr.videoeditingservice.repository.VideoDataRepository;
+import com.mzbr.videoeditingservice.repository.VideoHashRepository;
 import com.mzbr.videoeditingservice.repository.VideoRepository;
 import com.mzbr.videoeditingservice.repository.VideoSegmentRepository;
 import com.mzbr.videoeditingservice.util.S3Util;
@@ -86,6 +90,8 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	private final UserUploadAudioRepository userUploadAudioRepository;
 	private final StoreRepository storeRepository;
 	private final VideoDataRepository videoDataRepository;
+	private final VideoHashRepository videoHashRepository;
+	private final HashTagRepository hashTagRepository;
 
 	@Override
 	public void videoProcessStart(Integer memberId, String videoUuid) {
@@ -145,6 +151,19 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 			.build());
 
 		//추후 태그 추가 되어야 함
+		List<VideoHash> videoHashes = new ArrayList<>();
+		for (String tag : videoEditingRequestDto.getTags()) {
+			HashTag hashTag = hashTagRepository.findByName(tag).orElse(
+				hashTagRepository.save(HashTag.builder()
+					.name(tag)
+					.build())
+			);
+			videoHashes.add(VideoHash.builder()
+				.hashTag(hashTag)
+				.videoEntity(videoEntity)
+				.build());
+		}
+		videoHashRepository.saveAll(videoHashes);
 
 		//영상 편집 시작
 		dynamoService.createVideoEditingNewDocument(videoEntity.getId());
