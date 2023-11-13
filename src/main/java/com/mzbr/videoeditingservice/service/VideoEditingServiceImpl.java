@@ -134,6 +134,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 		userUploadAudioRepository.save(UserUploadAudioEntity.builder()
 			.url("audio/" + videoEditingRequestDto.getAudio().getFileName())
+			.volume(videoEditingRequestDto.getAudio().getVolume())
 			.videoEntity(videoEntity)
 			.build());
 		videoDataRepository.save(VideoData.builder()
@@ -168,7 +169,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		for (Clip clip : videoEntity.getClips()) {
 			inputPathList.add(s3Util.getFileToLocalDirectory(clip.getUrl()));
 		}
-		if(videoEntity.hasAudio()){
+		if (videoEntity.hasAudio()) {
 			inputPathList.add(s3Util.getFileToLocalDirectory(videoEntity.getAudio().getUrl()));
 		}
 		for (Path path : inputPathList) {
@@ -479,7 +480,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		filterGraph.addFilterChain(
 			FilterChain.of(
 				Filter.withName("ass")
-					.addArgument("'"+assPath.toAbsolutePath().toString()+"'")
+					.addArgument("'" + assPath.toAbsolutePath().toString() + "'")
 					// .addArgumentEscaped(modifyWindowPathForFfmpeg(assPath.toAbsolutePath().toString()))
 					.addInputLink("v_concat")
 					.addOutputLink("outv")
