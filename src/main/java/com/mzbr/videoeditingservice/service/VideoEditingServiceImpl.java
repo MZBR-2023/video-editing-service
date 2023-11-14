@@ -122,6 +122,8 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		}
 		clipRepository.saveAll(clips);
 
+		videoEntity.updateSegmentCount(clips.size());
+
 		List<Subtitle> subtitles = new ArrayList<>();
 		for (VideoEditingRequestDto.uploadSubtitle userSubtitle : videoEditingRequestDto.getSubtitles()) {
 			subtitles.add(Subtitle.builder()
@@ -132,6 +134,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 				.endTime((int)(userSubtitle.getEndDuration() * 1000))
 				.rotation(userSubtitle.getRotation())
 				.scale(userSubtitle.getScale())
+				.text(userSubtitle.getText())
 				.videoEntity(videoEntity)
 				.build());
 		}
@@ -142,20 +145,29 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 			.volume(videoEditingRequestDto.getAudio().getVolume())
 			.videoEntity(videoEntity)
 			.build());
+
 		videoDataRepository.save(VideoData.builder()
 			.description(videoEditingRequestDto.getDescription())
 			.star(videoEditingRequestDto.getStar())
 			.thumbnailUrl("thumbnail/" + videoEditingRequestDto.getThumbnailName())
+			.P144Url(ENCODED_FOLDER + "/" + videoEntity.getVideoUuid() + "/" + "P144.m3u8")
+			.P360Url(ENCODED_FOLDER + "/" + videoEntity.getVideoUuid() + "/" + "P360.m3u8")
+			.P480Url(ENCODED_FOLDER + "/" + videoEntity.getVideoUuid() + "/" + "P480.m3u8")
+			.P720Url(ENCODED_FOLDER + "/" + videoEntity.getVideoUuid() + "/" + "P720.m3u8")
 			.videoEntity(videoEntity)
 			.build());
 
 		List<VideoHash> videoHashes = new ArrayList<>();
 		for (String tag : videoEditingRequestDto.getTags()) {
-			HashTag hashTag = hashTagRepository.findByName(tag).orElse(
-				hashTagRepository.save(HashTag.builder()
+			Optional<HashTag> tempTag = hashTagRepository.findByName(tag);
+			HashTag hashTag=null;
+			if (tempTag.isPresent()) {
+				hashTag = tempTag.get();
+			} else if (tempTag.isEmpty()) {
+				hashTag = hashTagRepository.save(HashTag.builder()
 					.name(tag)
-					.build())
-			);
+					.build());
+			}
 			videoHashes.add(VideoHash.builder()
 				.hashTag(hashTag)
 				.videoEntity(videoEntity)
@@ -164,7 +176,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		videoHashRepository.saveAll(videoHashes);
 
 		//영상 편집 시작
-		dynamoService.createVideoEditingNewDocument(videoEntity.getId());
+		dynamoService.createVideoEditingNewDocument(videoEntity.getId(), videoEntity.getSegmentCount());
 		editingKinesisProduceService.publishIdToKinesis(videoEntity.getId());
 	}
 
@@ -506,8 +518,6 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		return filterGraph;
 	}
 
-
-
 	@Override
 	public Path generateASSBySubtitles(Set<Subtitle> subtitles, String fileName) throws Exception {
 
@@ -521,7 +531,6 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 		return tempFile.getAbsoluteFile().toPath();
 	}
-
 
 	protected List<Path> getSegementPathList() {
 		List<Path> result = new ArrayList<>();

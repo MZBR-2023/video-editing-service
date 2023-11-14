@@ -54,6 +54,7 @@ public class Video {
 
 	String videoUuid;
 	String thumbnailUrl;
+	Integer segmentCount;
 
 	@OneToMany(mappedBy = "videoEntity")
 	Set<Clip> clips;
@@ -93,5 +94,9 @@ public class Video {
 
 	public void storeRegister(Store store) {
 		this.store=store;
+	}
+
+	public void updateSegmentCount(Integer segmentCount) {
+		this.segmentCount = segmentCount;
 	}
 }

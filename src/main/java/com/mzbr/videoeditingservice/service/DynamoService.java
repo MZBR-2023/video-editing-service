@@ -1,5 +1,6 @@
 package com.mzbr.videoeditingservice.service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.mzbr.videoeditingservice.model.document.VideoEditingDynamoTable;
 import com.mzbr.videoeditingservice.model.document.VideoEncodingDynamoTable;
+import com.mzbr.videoeditingservice.model.document.VideoStatusDynamoTable;
 
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
@@ -32,11 +34,18 @@ public class DynamoService {
 
 	@Value("${cloud.dynamo.editing-table}")
 	private String EDITING_TABLE_NAME;
+
+	@Value("${cloud.dynamo.status-table}")
+	private String STATUS_TABLE_NAME;
 	private final TableSchema<VideoEncodingDynamoTable> videoEncodingtableSchema = TableSchema.fromBean(
 		VideoEncodingDynamoTable.class);
 
 	private final TableSchema<VideoEditingDynamoTable> videoEditingDynamoTableTableSchema = TableSchema.fromBean(
 		VideoEditingDynamoTable.class);
+
+	private final TableSchema<VideoStatusDynamoTable> videoStatusDynamoTableTableSchema = TableSchema.fromBean(
+		VideoStatusDynamoTable.class
+	);
 
 	public GetItemResponse getItemResponse(String tableName, String idName, Long id) {
 		return dynamoDbClient.getItem(GetItemRequest.builder()
@@ -70,7 +79,7 @@ public class DynamoService {
 		dynamoDbEnhancedClient.transactWriteItems(transactWriteItemsEnhancedRequest.build());
 	}
 
-	public void createVideoEditingNewDocument(Long id) {
+	public void createVideoEditingNewDocument(Long id, Integer segmentCount) {
 		VideoEditingDynamoTable videoEditingDynamoTable = VideoEditingDynamoTable.builder()
 			.id(id)
 			.status("waiting")
@@ -81,6 +90,23 @@ public class DynamoService {
 
 		dynamoDbEnhancedClient.transactWriteItems(TransactWriteItemsEnhancedRequest.builder()
 			.addPutItem(table, videoEditingDynamoTable)
+			.build());
+		List<Boolean> booleans = new ArrayList<>();
+		for (int i = 0; i < segmentCount; i++) {
+			booleans.add(false);
+		}
+		VideoStatusDynamoTable videoStatusDynamoTable = VideoStatusDynamoTable.builder()
+			.id(id)
+			.segmentCount(segmentCount)
+			.p144Status(booleans)
+			.p360Status(booleans)
+			.p480Status(booleans)
+			.p720Status(booleans)
+			.build();
+		DynamoDbTable<VideoStatusDynamoTable> videoStatusDynamoTableDynamoDbTable =
+			dynamoDbEnhancedClient.table(STATUS_TABLE_NAME, videoStatusDynamoTableTableSchema);
+		dynamoDbEnhancedClient.transactWriteItems(TransactWriteItemsEnhancedRequest.builder()
+			.addPutItem(videoStatusDynamoTableDynamoDbTable, videoStatusDynamoTable)
 			.build());
 	}
 }
