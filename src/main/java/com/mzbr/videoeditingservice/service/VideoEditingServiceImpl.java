@@ -140,11 +140,14 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		}
 		subtitleRepository.saveAll(subtitles);
 
-		userUploadAudioRepository.save(UserUploadAudio.builder()
-			.url("audio/" + videoEditingRequestDto.getAudio().getFileName())
-			.volume(videoEditingRequestDto.getAudio().getVolume())
-			.videoEntity(videoEntity)
-			.build());
+		if (videoEditingRequestDto.getAudio() != null) {
+			userUploadAudioRepository.save(UserUploadAudio.builder()
+				.url("audio/" + videoEditingRequestDto.getAudio().getFileName())
+				.volume(videoEditingRequestDto.getAudio().getVolume())
+				.videoEntity(videoEntity)
+				.build());
+		}
+
 
 		videoDataRepository.save(VideoData.builder()
 			.description(videoEditingRequestDto.getDescription())
