@@ -21,6 +21,7 @@ public class VideoEncodingDynamoTable {
 	private Long rdbId;
 	private String status;
 	private String format;
+	private Integer failureCount;
 
 	@DynamoDbPartitionKey
 	public String getId() {

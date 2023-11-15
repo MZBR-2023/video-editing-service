@@ -3,6 +3,7 @@ package com.mzbr.videoeditingservice.service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -52,6 +53,18 @@ public class DynamoService {
 			.tableName(tableName)
 			.key(Collections.singletonMap(idName, AttributeValue.builder().n(String.valueOf(id)).build()))
 			.build());
+	}
+
+	public VideoEditingDynamoTable getVideoEditingDynamoTable(String tableName, String idName, Long id) {
+		GetItemResponse response = getItemResponse(tableName, idName, id);
+		Map<String, AttributeValue> item = response.item();
+
+
+		return VideoEditingDynamoTable.builder()
+			.failureCount(Integer.parseInt(item.get("failureCount").n()))
+			.id(Long.valueOf(item.get("id").n()))
+			.status(item.get("status").s())
+			.build();
 	}
 
 	public UpdateItemResponse updateStatus(String tableName, String idName, String statusName, Long id,
