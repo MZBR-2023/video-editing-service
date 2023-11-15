@@ -160,7 +160,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		List<VideoHash> videoHashes = new ArrayList<>();
 		for (String tag : videoEditingRequestDto.getTags()) {
 			Optional<HashTag> tempTag = hashTagRepository.findByName(tag);
-			HashTag hashTag=null;
+			HashTag hashTag = null;
 			if (tempTag.isPresent()) {
 				hashTag = tempTag.get();
 			} else if (tempTag.isEmpty()) {
@@ -439,6 +439,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 					.id(UUID.randomUUID().toString())
 					.rdbId(videoSegment.getId())
 					.status("waiting")
+					.failureCount(0)
 					.format(encodeFormat.name())
 					.build());
 			}
