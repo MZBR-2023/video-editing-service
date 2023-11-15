@@ -114,6 +114,7 @@ public class EditingConsumerKinesisService {
 
 
 	public CompletableFuture<Void> updateAndProcessJob(String idString) {
+		log.info("{} 작업 시작",idString);
 		Long id = Long.parseLong(idString);
 		return CompletableFuture.supplyAsync(() -> {
 			GetItemResponse getItemResponse = dynamoService.getItemResponse(JOB_TABLE, JOB_ID, id);
