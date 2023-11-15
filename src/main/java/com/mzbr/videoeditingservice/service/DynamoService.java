@@ -21,6 +21,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
+import software.amazon.awssdk.services.dynamodb.model.ReturnValue;
 import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.UpdateItemResponse;
 
@@ -70,6 +71,7 @@ public class DynamoService {
 	public UpdateItemResponse updateStatus(String tableName, String idName, String statusName, Long id,
 		String newStatus) {
 		return dynamoDbClient.updateItem(UpdateItemRequest.builder()
+			.returnValues(ReturnValue.ALL_OLD.toString())
 			.tableName(tableName)
 			.key(Collections.singletonMap(idName, AttributeValue.builder().n(String.valueOf(id)).build()))
 			.updateExpression("SET #status = :newStatus")
