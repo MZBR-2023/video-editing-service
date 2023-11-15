@@ -10,9 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -29,7 +27,6 @@ import com.mzbr.videoeditingservice.dto.TempPreviewDto;
 import com.mzbr.videoeditingservice.dto.VideoEditingRequestDto;
 import com.mzbr.videoeditingservice.enums.EncodeFormat;
 import com.mzbr.videoeditingservice.exception.MemberException;
-import com.mzbr.videoeditingservice.model.entity.audio.Audio;
 import com.mzbr.videoeditingservice.model.entity.Clip;
 import com.mzbr.videoeditingservice.model.entity.HashTag;
 import com.mzbr.videoeditingservice.model.entity.Member;
@@ -104,7 +101,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 	@Transactional
 	@Override
-	public void videoEditing(VideoEditingRequestDto videoEditingRequestDto, Integer memberId) {
+	public List<String> videoEditing(VideoEditingRequestDto videoEditingRequestDto, Integer memberId) throws Exception {
 		Video videoEntity = videoRepository.findByVideoUuid(videoEditingRequestDto.getVideoUuid()).orElseThrow();
 		Store store = storeRepository.findById(videoEditingRequestDto.getStoreId()).orElseThrow();
 		if (videoEntity.getMember().getId() != memberId) {
@@ -140,11 +137,14 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		}
 		subtitleRepository.saveAll(subtitles);
 
-		userUploadAudioRepository.save(UserUploadAudio.builder()
-			.url("audio/" + videoEditingRequestDto.getAudio().getFileName())
-			.volume(videoEditingRequestDto.getAudio().getVolume())
-			.videoEntity(videoEntity)
-			.build());
+		if (videoEditingRequestDto.getAudio() != null) {
+			userUploadAudioRepository.save(UserUploadAudio.builder()
+				.url("audio/" + videoEditingRequestDto.getAudio().getFileName())
+				.volume(videoEditingRequestDto.getAudio().getVolume())
+				.videoEntity(videoEntity)
+				.build());
+
+		}
 
 		videoDataRepository.save(VideoData.builder()
 			.description(videoEditingRequestDto.getDescription())
@@ -176,8 +176,17 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		videoHashRepository.saveAll(videoHashes);
 
 		//영상 편집 시작
-		dynamoService.createVideoEditingNewDocument(videoEntity.getId(), videoEntity.getSegmentCount());
-		editingKinesisProduceService.publishIdToKinesis(videoEntity.getId());
+		// dynamoService.createVideoEditingNewDocument(videoEntity.getId(), videoEntity.getSegmentCount());
+		// editingKinesisProduceService.publishIdToKinesis(videoEntity.getId());
+		processVideo(videoEntity.getId(), 720, 1280, "editing-videos");
+		List<VideoSegment> videoSegmentList = videoSegmentRepository.findByVideoEntity(videoEntity);
+		List<String> urls = new ArrayList<>();
+		for (VideoSegment videoSegment : videoSegmentList) {
+			urls.add(s3Util.fileUrl(videoSegment.getVideoUrl()));
+		}
+		return urls;
+
+
 	}
 
 	@Override
@@ -220,7 +229,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		persistAndSendVideoSegment(folderPath, videoEntity, pathList);
 
 		//m3u8파일 제작 후 업로드
-		createAndUploadM3U8(videoEntity, pathList.size());
+		// createAndUploadM3U8(videoEntity, pathList.size());
 
 		// 임시 파일 삭제
 		pathList.addAll(inputPathList);
@@ -421,12 +430,12 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		}
 		videoSegmentRepository.saveAll(videoSegmentList);
 
-		List<VideoEncodingDynamoTable> videoEncodingDynamoTableList = saveJopToDynamoDB(videoSegmentList);
-
-		encodingKinesisService.publishUuidListToKinesis(
-			videoEncodingDynamoTableList.stream()
-				.map(VideoEncodingDynamoTable::getId)
-				.collect(Collectors.toList()));
+		// List<VideoEncodingDynamoTable> videoEncodingDynamoTableList = saveJopToDynamoDB(videoSegmentList);
+		//
+		// encodingKinesisService.publishUuidListToKinesis(
+		// 	videoEncodingDynamoTableList.stream()
+		// 		.map(VideoEncodingDynamoTable::getId)
+		// 		.collect(Collectors.toList()));
 
 	}
 

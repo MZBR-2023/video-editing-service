@@ -82,7 +82,7 @@ public class Video {
 
 
 	public boolean hasAudio() {
-		return userUploadAudioEntity != null || subtitles != null;
+		return userUploadAudioEntity != null || selectedServerAudioEntity != null;
 	}
 
 	public Audio getAudio() {

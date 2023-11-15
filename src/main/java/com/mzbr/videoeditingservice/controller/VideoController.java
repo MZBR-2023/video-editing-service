@@ -1,6 +1,7 @@
 package com.mzbr.videoeditingservice.controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import com.mzbr.videoeditingservice.dto.TempPreviewDto;
 import com.mzbr.videoeditingservice.dto.UploadCompleteRequestDto;
 import com.mzbr.videoeditingservice.dto.UploadTempVideoDto;
 import com.mzbr.videoeditingservice.dto.UrlDto;
+import com.mzbr.videoeditingservice.dto.VideoEditResponseDto;
 import com.mzbr.videoeditingservice.dto.VideoEditingRequestDto;
 import com.mzbr.videoeditingservice.service.PreVideoService;
 import com.mzbr.videoeditingservice.service.VideoEditingService;
@@ -82,11 +84,18 @@ public class VideoController {
 	}
 
 	//영상 제작 완료
+	// @PostMapping("/edit")
+	// public ResponseEntity videoEditProcessStart(@RequestBody VideoEditingRequestDto videoEditingRequestDto,
+	// 	@MemberId Integer memberId) {
+	// 	videoEditingService.videoEditing(videoEditingRequestDto, memberId);
+	// 	return new ResponseEntity(HttpStatus.OK);
+	// }
+
 	@PostMapping("/edit")
 	public ResponseEntity videoEditProcessStart(@RequestBody VideoEditingRequestDto videoEditingRequestDto,
-		@MemberId Integer memberId) {
-		videoEditingService.videoEditing(videoEditingRequestDto, memberId);
-		return new ResponseEntity(HttpStatus.OK);
+		@MemberId Integer memberId) throws Exception {
+		List<String> strings = videoEditingService.videoEditing(videoEditingRequestDto, memberId);
+		VideoEditResponseDto videoEditResponseDto = new VideoEditResponseDto(strings);
+		return new ResponseEntity(videoEditResponseDto,HttpStatus.OK);
 	}
-
 }

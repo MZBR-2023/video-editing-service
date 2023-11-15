@@ -7,18 +7,15 @@ import java.util.Set;
 
 import com.github.kokorin.jaffree.ffmpeg.FFmpeg;
 import com.github.kokorin.jaffree.ffmpeg.FilterGraph;
-import com.github.kokorin.jaffree.ffmpeg.Input;
 import com.mzbr.videoeditingservice.dto.TempPreviewDto;
 import com.mzbr.videoeditingservice.dto.VideoEditingRequestDto;
-import com.mzbr.videoeditingservice.model.entity.audio.Audio;
-import com.mzbr.videoeditingservice.model.entity.Clip;
 import com.mzbr.videoeditingservice.model.entity.Subtitle;
 
 public interface VideoEditingService {
 
 	void videoProcessStart(Integer memberId, String videoUuid);
 
-	void videoEditing(VideoEditingRequestDto videoEditingRequestDto, Integer memberId);
+	List<String> videoEditing(VideoEditingRequestDto videoEditingRequestDto, Integer memberId) throws Exception;
 
 	void processVideo(Long videoId, int width, int height, String folderPath) throws Exception;
 	String tempVideoProcess(String videoName, String folderPath, Integer memberId) throws Exception;
