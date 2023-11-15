@@ -132,6 +132,7 @@ public class EditingConsumerKinesisService {
 		}).thenCompose(result -> processJob(id)).thenRun(() -> {
 			updateJobStatus(id, COMPLETED_STATUS);
 		}).exceptionally(e -> {
+			e.printStackTrace();
 			if (e.getCause() instanceof NoSuchElementException) {
 				return null;
 			}
