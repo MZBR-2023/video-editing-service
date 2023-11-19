@@ -148,7 +148,6 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 				.build());
 		}
 
-
 		videoDataRepository.save(VideoData.builder()
 			.description(videoEditingRequestDto.getDescription())
 			.star(videoEditingRequestDto.getStar())
@@ -322,11 +321,13 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		for (int i = 0; i < videoPathList.size(); i++) {
 			filterGraph.addFilterChain(FilterChain.of(
 				Filter.withName("setpts").addArgument("PTS-STARTPTS").addInputLink(i + ":v"),
-				Filter.withName("setsar")
-					.addArgument("1"),
+
 				Filter.withName("scale")
 					.addArgument("width", "720")
-					.addArgument("height", "1280")
+					.addArgument("height", "1280"),
+
+				Filter.withName("setsar")
+					.addArgument("1")
 					.addOutputLink("v" + i)
 			));
 			filterGraph.addFilterChain(FilterChain.of(
@@ -352,8 +353,8 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		fFmpeg.addOutput(UrlOutput.toUrl(outputPath))
 			.addArguments("-map", "[v_concat]")
 			.addArguments("-map", "[a_concat]")
-			.addArguments("-c:v","libx264")
-			.addArguments("-preset","ultrafast")
+			.addArguments("-c:v", "libx264")
+			.addArguments("-preset", "ultrafast")
 			.execute();
 
 		Path path = Paths.get(CURRENT_WORKING_DIR + "/" + outputPath);
@@ -463,11 +464,11 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		for (Clip clip : videoEntity.getClips()) {
 			filterGraph.addFilterChain(FilterChain.of(
 				Filter.withName("setpts").addArgument("PTS-STARTPTS").addInputLink(i + ":v"),
-				Filter.withName("setsar")
-					.addArgument("1"),
 				Filter.withName("scale")
 					.addArgument("720")
-					.addArgument("1280")
+					.addArgument("1280"),
+				Filter.withName("setsar")
+					.addArgument("1")
 					.addOutputLink("v" + i)
 			));
 			filterGraph.addFilterChain(FilterChain.of(
