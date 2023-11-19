@@ -321,11 +321,12 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 
 		for (int i = 0; i < videoPathList.size(); i++) {
 			filterGraph.addFilterChain(FilterChain.of(
-				Filter.withName("setpts").addArgument("PTS-STARTPTS").addInputLink(i + ":v").addOutputLink("vt" + i),
+				Filter.withName("setpts").addArgument("PTS-STARTPTS").addInputLink(i + ":v"),
+				Filter.withName("setsar")
+					.addArgument("1"),
 				Filter.withName("scale")
 					.addArgument("width", "720")
 					.addArgument("height", "1280")
-					.addInputLink("vt" + i)
 					.addOutputLink("v" + i)
 			));
 			filterGraph.addFilterChain(FilterChain.of(
@@ -462,6 +463,8 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		for (Clip clip : videoEntity.getClips()) {
 			filterGraph.addFilterChain(FilterChain.of(
 				Filter.withName("setpts").addArgument("PTS-STARTPTS").addInputLink(i + ":v"),
+				Filter.withName("setsar")
+					.addArgument("1"),
 				Filter.withName("scale")
 					.addArgument("720")
 					.addArgument("1280")
