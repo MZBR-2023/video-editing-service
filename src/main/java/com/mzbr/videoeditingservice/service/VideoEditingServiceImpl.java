@@ -351,6 +351,8 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 		fFmpeg.addOutput(UrlOutput.toUrl(outputPath))
 			.addArguments("-map", "[v_concat]")
 			.addArguments("-map", "[a_concat]")
+			.addArguments("-c:v","libx264")
+			.addArguments("-preset","ultrafast")
 			.execute();
 
 		Path path = Paths.get(CURRENT_WORKING_DIR + "/" + outputPath);
