@@ -40,13 +40,16 @@ public class S3Util {
 	@Value("${cloud.aws.s3.bucket}")
 	private String BUCKET_NAME;
 
+	@Value("${cloud.aws.s3.url}")
+	private String S3_URL;
+
 	public void uploadLocalFileByStringFormat(List<Path> pathList, String folderName) {
 		for (Path path : pathList) {
 			uploadLocalFile(path,folderName + "/" + path.getFileName().toString());
 		}
 	}
 	public String fileUrl(String fileName){
-		return "https://" + BUCKET_NAME + ".s3." + Region.AP_NORTHEAST_2.toString() + ".amazonaws.com/" + fileName;
+		return S3_URL + fileName;
 	}
 	public String uploadLocalFile(Path path,String uploadUrl){
 		PutObjectRequest putObjectRequest = PutObjectRequest.builder()
