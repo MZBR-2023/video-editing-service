@@ -73,7 +73,7 @@ public class VideoEditingServiceImpl implements VideoEditingService {
 	@Value("${encoded-folder.prefix}")
 	private String ENCODED_FOLDER;
 
-	@Value("${cloud.aws.url}")
+	@Value("${cloud.aws.s3.url}")
 	private String S3_URL;
 
 	private final VideoSegmentRepository videoSegmentRepository;
